@@ -8,12 +8,13 @@
   },
   "scripts": {
     "build": "npm run clean && tsc",
-    "clean": "rm -rf example/test",
-    "test": "npm run build && cd example && node ../index.js"
+    "clean": "rm -rf dist example/test",
+    "test": "npm run build && cd example && node ../dist/index.js"
   },
   "keywords": [],
   "license": "MIT",
   "dependencies": {
+    "@types/jasmine": "^2.6.0",
     "@types/node": "^8.0.26",
     "ts-simple-ast": "^0.60.0",
     "typescript": "^2.5.2"
