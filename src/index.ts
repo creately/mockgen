@@ -82,6 +82,7 @@ function createClassFooter(sourceClass: ClassDeclaration): string[] {
 }
 
 function createMembers(sourceClass: ClassDeclaration): string[] {
+    const className = sourceClass.getName();
     const propMembers = sourceClass.getInstanceMembers()
         .map((sourceProperty: MethodDeclaration | PropertyDeclaration | GetAccessorDeclaration | SetAccessorDeclaration | ParameterDeclaration) => {
             const propertyName = sourceProperty.getName();
@@ -92,7 +93,7 @@ function createMembers(sourceClass: ClassDeclaration): string[] {
                 (sourceProperty.getScope() === Scope.Private || sourceProperty.getScope() === Scope.Protected)) {
                 return [
                     `public ${propertyName}( ...args: any[] ) {`,
-                    `${tab}return super.${propertyName}.call( this, ...args );`,
+                    `${tab}return (${className}.prototype as any).${propertyName}.call( this, ...args );`,
                     `}`,
                     `private \$spyFor${upperCamelCase(propertyName)}: jasmine.Spy;`,
                     `public \$createSpyFor${upperCamelCase(propertyName)}() {`,
