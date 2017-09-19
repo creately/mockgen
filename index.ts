@@ -91,7 +91,7 @@ function createMembers(sourceClass: ClassDeclaration): string[] {
             if ((sourceProperty instanceof MethodDeclaration) &&
                 (sourceProperty.getScope() === Scope.Private || sourceProperty.getScope() === Scope.Protected)) {
                 return [
-                    `public ${propertyName}( ...args ) {`,
+                    `public ${propertyName}( ...args: any[] ) {`,
                     `${tab}return super.${propertyName}.call( this, ...args );`,
                     `}`,
                     `private \$spyFor${upperCamelCase(propertyName)}: jasmine.Spy;`,
