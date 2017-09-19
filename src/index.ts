@@ -40,6 +40,7 @@ ast.getSourceFiles().forEach(sourceFile => {
         .map(sourceClass => {
             return [
                 ...createClassHeader(sourceClass),
+                ...prefix(tab, createHelpers(sourceClass)),
                 ...prefix(tab, createMembers(sourceClass)),
                 ...createClassFooter(sourceClass),
             ];
@@ -81,6 +82,43 @@ function createClassFooter(sourceClass: ClassDeclaration): string[] {
     return [`}`];
 }
 
+function createHelpers(sourceClass: ClassDeclaration): string[] {
+    const className = sourceClass.getName();
+    return [
+        `private \$spies: any = {};`,
+        `private get \$instance(): any {`,
+        `${tab}return this;`,
+        `}`,
+        `private get \$prototype(): any {`,
+        `${tab}return ${className}.prototype;`,
+        `}`,
+        `public \$get( field: string ): jasmine.Spy {`,
+        `${tab}return this.\$instance[field];`,
+        `}`,
+        `public \$call( field: string, ...args: any[]) {`,
+        `${tab}return this.\$prototype[field].call( this, ...args );`,
+        `}`,
+        `public \$createGetterFor( field: string ): jasmine.Spy {`,
+        `${tab}if ( !this.\$spies[field]) {`,
+        `${tab}${tab}this.\$spies[field] = spyOnProperty( this.\$instance, field, 'get' );`,
+        `${tab}}`,
+        `${tab}return this.\$spies[field];`,
+        `}`,
+        `public \$createSetterFor( field: string ): jasmine.Spy {`,
+        `${tab}if ( !this.\$spies[field]) {`,
+        `${tab}${tab}this.\$spies[field] = spyOnProperty( this.\$instance, field, 'set' );`,
+        `${tab}}`,
+        `${tab}return this.\$spies[field];`,
+        `}`,
+        `public \$createSpyFor( field: string ): jasmine.Spy {`,
+        `${tab}if ( !this.\$spies[field]) {`,
+        `${tab}${tab}this.\$spies[field] = spyOn( this.\$instance, field );`,
+        `${tab}}`,
+        `${tab}return this.\$spies[field];`,
+        `}`,
+    ];
+}
+
 function createMembers(sourceClass: ClassDeclaration): string[] {
     const className = sourceClass.getName();
     const propMembers = sourceClass.getInstanceMembers()
@@ -89,29 +127,30 @@ function createMembers(sourceClass: ClassDeclaration): string[] {
             if (!propertyName) {
                 return [];
             }
-            if ((sourceProperty instanceof MethodDeclaration) &&
-                (sourceProperty.getScope() === Scope.Private || sourceProperty.getScope() === Scope.Protected)) {
+            if (sourceProperty instanceof MethodDeclaration && sourceProperty.getScope() === Scope.Protected ) {
                 return [
                     `public ${propertyName}( ...args: any[] ) {`,
-                    `${tab}return (${className}.prototype as any).${propertyName}.call( this, ...args );`,
+                    `${tab}return this.$call( '${propertyName}', ...args );`,
                     `}`,
-                    `private \$spyFor${upperCamelCase(propertyName)}: jasmine.Spy;`,
                     `public \$createSpyFor${upperCamelCase(propertyName)}() {`,
-                    `${tab}if ( !this.\$spyFor${upperCamelCase(propertyName)} ) {`,
-                    `${tab}${tab}this.\$spyFor${upperCamelCase(propertyName)} = spyOn( this as any, '${propertyName}' );`,
-                    `${tab}}`,
-                    `${tab}return this.\$spyFor${upperCamelCase(propertyName)};`,
+                    `${tab}return this.\$createSpyFor( '${propertyName}' );`,
+                    `}`,
+                ];
+            }
+            if (sourceProperty instanceof MethodDeclaration && sourceProperty.getScope() === Scope.Private ) {
+                return [
+                    `public \$call${upperCamelCase(propertyName)}( ...args: any[] ) {`,
+                    `${tab}return this.$call( '${propertyName}', ...args );`,
+                    `}`,
+                    `public \$createSpyFor${upperCamelCase(propertyName)}() {`,
+                    `${tab}return this.\$createSpyFor( '${propertyName}' );`,
                     `}`,
                 ];
             }
             if (sourceProperty instanceof MethodDeclaration) {
                 return [
-                    `private \$spyFor${upperCamelCase(propertyName)}: jasmine.Spy;`,
                     `public \$createSpyFor${upperCamelCase(propertyName)}() {`,
-                    `${tab}if ( !this.\$spyFor${upperCamelCase(propertyName)} ) {`,
-                    `${tab}${tab}this.\$spyFor${upperCamelCase(propertyName)} = spyOn( this as any, '${propertyName}' );`,
-                    `${tab}}`,
-                    `${tab}return this.\$spyFor${upperCamelCase(propertyName)};`,
+                    `${tab}return this.\$createSpyFor( '${propertyName}' );`,
                     `}`,
                 ];
             }
@@ -119,24 +158,24 @@ function createMembers(sourceClass: ClassDeclaration): string[] {
                 (sourceProperty.getScope() === Scope.Private || sourceProperty.getScope() === Scope.Protected)) {
                 return [
                     `public \$get${upperCamelCase(propertyName)}() {`,
-                    `${tab}return ( this as any ).${propertyName};`,
+                    `${tab}return this.$get( '${propertyName}' );`,
                     `}`,
                     `public \$createGetterFor${upperCamelCase(propertyName)}() {`,
-                    `${tab}return spyOnProperty( this as any, '${propertyName}', 'get' );`,
+                    `${tab}return this.\$createGetterFor( '${propertyName}' );`,
                     `}`,
                 ];
             }
             if (sourceProperty instanceof PropertyDeclaration || sourceProperty instanceof GetAccessorDeclaration) {
                 return [
                     `public \$createGetterFor${upperCamelCase(propertyName)}() {`,
-                    `${tab}return spyOnProperty( this as any, '${propertyName}', 'get' );`,
+                    `${tab}return this.\$createGetterFor( '${propertyName}' );`,
                     `}`,
                 ];
             }
             if (sourceProperty instanceof SetAccessorDeclaration) {
                 return [
                     `public \$createSetterFor${upperCamelCase(propertyName)}() {`,
-                    `${tab}return spyOnProperty( this as any, '${propertyName}', 'set' );`,
+                    `${tab}return this.\$createSetterFor( '${propertyName}' );`,
                     `}`,
                 ];
             }
@@ -153,16 +192,16 @@ function createMembers(sourceClass: ClassDeclaration): string[] {
                     if (sourceParameter.getScope() === Scope.Private || sourceParameter.getScope() === Scope.Protected) {
                         return [
                             `public \$get${upperCamelCase(parameterName)}() {`,
-                            `${tab}return ( this as any ).${parameterName};`,
+                            `${tab}return this.$get( '${parameterName}' );`,
                             `}`,
                             `public \$createGetterFor${upperCamelCase(parameterName)}() {`,
-                            `${tab}return spyOnProperty( this as any, '${parameterName}', 'get' );`,
+                            `${tab}return this.\$createGetterFor( '${parameterName}' );`,
                             `}`,
                         ];
                     }
                     return [
                         `public \$createGetterFor${upperCamelCase(parameterName)}() {`,
-                        `${tab}return spyOnProperty( this as any, '${parameterName}', 'get' );`,
+                        `${tab}return this.\$createGetterFor( '${parameterName}' );`,
                         `}`,
                     ];
                 });
