@@ -73,9 +73,18 @@ function upperCamelCase(str: string): string {
     return str[0].toUpperCase() + str.slice(1);
 }
 
+function createTypeParams(sourceClass: ClassDeclaration) {
+    const params = sourceClass.getTypeParameters().map(() => 'any');
+    if (!params.length) {
+        return '';
+    }
+    return `<${params.join(',')}>`;
+}
+
 function createClassHeader(sourceClass: ClassDeclaration): string[] {
     const className = sourceClass.getName();
-    return [`export class Mock${className} extends ${className} {`];
+    const typeParams = createTypeParams(sourceClass);
+    return [`export class Mock${className} extends ${className}${typeParams} {`];
 }
 
 function createClassFooter(sourceClass: ClassDeclaration): string[] {
