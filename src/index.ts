@@ -51,6 +51,8 @@ ast.getSourceFiles().forEach(sourceFile => {
         }, []);
 
     const mockedSource = [
+        '// tslint:disable',
+        '',
         ...mockedImports,
         '',
         ...mockedClasses,
@@ -67,7 +69,7 @@ ast.getSourceFiles().forEach(sourceFile => {
 });
 
 function prefix(str: string, lines: string[]): string[] {
-    return lines.map(line => str + line)
+    return lines.map(line => line !== '' ? str + line : '');
 }
 
 function upperCamelCase(str: string): string {
@@ -177,7 +179,7 @@ function createMethod(sourceProperty: MethodDeclaration): string[] {
     if (sourceProperty.getStaticKeyword()) {
         if (sourceProperty.getScope() === Scope.Protected || sourceProperty.getScope() === Scope.Private) {
             lines.push(
-                `public static \$call${upperCamelCase(propertyName)}( ...args: any[] ) {`,
+                `public static \$call${upperCamelCase(propertyName)}( ...args: any[]) {`,
                 `${tab}return this.$call( '${propertyName}', ...args );`,
                 `}`,
             );
@@ -190,19 +192,19 @@ function createMethod(sourceProperty: MethodDeclaration): string[] {
     } else {
         if (sourceProperty.getAbstractKeyword()) {
             lines.push(
-                `public ${propertyName}( ...args: any[] ) {`,
+                `public ${propertyName}( ...args: any[]) {`,
                 `${tab}return undefined as any;`,
                 `}`,
             );
         } else if (sourceProperty instanceof MethodDeclaration && sourceProperty.getScope() === Scope.Protected ) {
             lines.push(
-                `public ${propertyName}( ...args: any[] ) {`,
+                `public ${propertyName}( ...args: any[]) {`,
                 `${tab}return this.$call( '${propertyName}', ...args );`,
                 `}`,
             );
         } else if (sourceProperty instanceof MethodDeclaration && sourceProperty.getScope() === Scope.Private ) {
             lines.push(
-                `public \$call${upperCamelCase(propertyName)}( ...args: any[] ) {`,
+                `public \$call${upperCamelCase(propertyName)}( ...args: any[]) {`,
                 `${tab}return this.$call( '${propertyName}', ...args );`,
                 `}`,
             );
