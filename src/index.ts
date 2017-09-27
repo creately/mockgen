@@ -17,6 +17,7 @@ import {
 
 const ast = new AST();
 const tab = '    ';
+const mockClassFilenameSuffix = '.mock.ts';
 
 ast.addSourceFiles('./src/**/*.ts');
 ast.getSourceFiles().forEach(sourceFile => {
@@ -26,11 +27,12 @@ ast.getSourceFiles().forEach(sourceFile => {
         return;
     }
 
-    const rootPath = process.cwd();
+    const rootPath = process.cwd().replace( /\\/g, '/' );
     const sourcePath = sourceFile.getFilePath();
+
     const outputPath = sourcePath.replace(rootPath + '/src', rootPath + '/test');
     const outputDirname = path.dirname(outputPath);
-    const relativePath = path.relative(outputDirname, sourcePath);
+    const relativePath = path.relative(outputDirname, sourcePath).replace( /\\/g, '/' );
 
     const mockedImports = sourceClasses
         .map(sourceClass => {
@@ -65,7 +67,8 @@ ast.getSourceFiles().forEach(sourceFile => {
         mkdirSync(outputDirname);
     }
 
-    writeFileSync(outputPath.replace(/\.ts$/, '.mock.ts'), mockedSource);
+    writeFileSync(outputPath.replace(/\.ts$/, mockClassFilenameSuffix), mockedSource);
+
 });
 
 function prefix(str: string, lines: string[]): string[] {
