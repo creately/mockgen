@@ -1,35 +1,24 @@
 import { MethodInfo } from './types/method-info';
-import { GetAccessorInfo, SetAccessorInfo } from "./types/accessor-info";
-import { ParameterPropertyInfo, PropertyInfo } from "./types/property-info";
+import { GetAccessorInfo, SetAccessorInfo } from './types/accessor-info';
+import { ParameterPropertyInfo, PropertyInfo } from './types/property-info';
 import { ClassMember } from './types/class-member';
 
-import {
-    ClassDeclaration,
-    MethodDeclaration,
-    PropertyDeclaration,
-    GetAccessorDeclaration,
-    SetAccessorDeclaration,
-    ParameterDeclaration,
-} from 'ts-simple-ast';
-
-import { MARKER_CUSTOM_CODE_BEGIN, MARKER_CUSTOM_CODE_END } from './constants';
-import { MemberKind } from "./types/member-properties";
-
-const TAB = '    ';
+import { MARKER_CUSTOM_CODE_BEGIN, MARKER_CUSTOM_CODE_END, TAB } from './constants';
+import { MemberKind } from './types/member-properties';
 
 /**
  * This class helps to mock functions, getters and setter of given class
  * @author Thanish, Mehdhi
  * @export
- * @class Generator
+ * @class FunctionGenerator
  */
-export class Generator {
+export class FunctionGenerator {
 
     private upperCamelCase(str: string): string {
         return str[0].toUpperCase() + str.slice(1);
     }
 
-    public createTypeParams( typeParameters: string[] ) {
+    private createTypeParams( typeParameters: string[] ) {
         // Currently all generic types are converted to any
         // When types are considered for Mocks this method should adapt it
         const params = typeParameters.map(() => 'any');
@@ -121,7 +110,7 @@ export class Generator {
         ];
     }
     
-    public createMethod( sourceProperty: ClassMember ): string[] {
+    private createMethod( sourceProperty: ClassMember ): string[] {
         const lines = [''];
         const propertyName = sourceProperty.name;
         if (propertyName) {
@@ -151,13 +140,13 @@ export class Generator {
                         `${TAB}return undefined as any;`,
                         `}`,
                     );
-                } else if ( sourceProperty /*instanceof MethodDeclaration*/ && sourceProperty.isProtected() ) {
+                } else if ( sourceProperty.isProtected() ) {
                     lines.push(
                         `public ${propertyName}( ...args: any[]) {`,
                         `${TAB}return this.$call( '${propertyName}', ...args );`,
                         `}`,
                     );
-                } else if ( sourceProperty /*instanceof MethodDeclaration*/ && sourceProperty.isPrivate() ) {
+                } else if ( sourceProperty.isPrivate() ) {
                     lines.push(
                         `public \$call${this.upperCamelCase(propertyName)}( ...args: any[]) {`,
                         `${TAB}return this.$call( '${propertyName}', ...args );`,
@@ -174,7 +163,7 @@ export class Generator {
         return lines;
     }
     
-    public createGetter(sourceProperty: ClassMember): string[] {
+    private createGetter(sourceProperty: ClassMember): string[] {
         const lines = [''];
         const propertyName = sourceProperty.name;
         if (propertyName) {
@@ -225,7 +214,7 @@ export class Generator {
         return lines;
     }
     
-    public createSetter(sourceProperty: ClassMember): string[] {
+    private createSetter(sourceProperty: ClassMember): string[] {
         const lines = [''];
         const propertyName = sourceProperty.name;
         if( propertyName  ){
@@ -257,7 +246,7 @@ export class Generator {
         return lines;
     }
     
-    public createParameter(sourceProperty: ClassMember): string[] {
+    private createParameter(sourceProperty: ClassMember): string[] {
         const lines = [''];
         const parameterName = sourceProperty.name;
         lines.push(
@@ -282,51 +271,19 @@ export class Generator {
         return lines;
     }
     
-    public createMembers(sourceClass: ClassDeclaration): string[] {
-        return sourceClass.getAllMembers()
-            .map(sourceProperty => {
-                let prop: ClassMember;
-                
-                if (sourceProperty instanceof MethodDeclaration) {
-                    prop = new MethodInfo( 
-                        sourceProperty.getName(),
-                        sourceProperty.getScope(),
-                        !!sourceProperty.getStaticKeyword(),
-                        !!sourceProperty.getAbstractKeyword()
-                    ); 
-                    return this.createMethod(prop);
-                } else if (sourceProperty instanceof PropertyDeclaration ) {
-                    prop = new PropertyInfo( 
-                        sourceProperty.getName(),
-                        sourceProperty.getScope(),
-                        'any',
-                        !!sourceProperty.getStaticKeyword(),
-                        !!sourceProperty.getAbstractKeyword()
-                    ); 
-                    return this.createGetter(prop);
-                } else if (sourceProperty instanceof GetAccessorDeclaration ) {
-                    prop = new GetAccessorInfo( 
-                        sourceProperty.getName(),
-                        sourceProperty.getScope(),
-                        'any',
-                        !!sourceProperty.getStaticKeyword(),
-                        !!sourceProperty.getAbstractKeyword()
-                    ); 
-                    return this.createGetter(prop);
-                } else if (sourceProperty instanceof SetAccessorDeclaration) {
-                    prop = new SetAccessorInfo( 
-                        sourceProperty.getName(),
-                        sourceProperty.getScope(),
-                        !!sourceProperty.getStaticKeyword(),
-                        !!sourceProperty.getAbstractKeyword()
-                    );
-                    return this.createSetter(prop);
-                } else if (sourceProperty instanceof ParameterDeclaration) {
-                    prop = new ParameterPropertyInfo( 
-                        sourceProperty.getName(),
-                        sourceProperty.getScope()
-                    );
-                    return this.createParameter(prop);
+    public createMembers( sourceProperties: ClassMember[] ): string[] {
+        return sourceProperties.map(
+            sourceProperty => {
+                if (sourceProperty instanceof MethodInfo) {
+                    return this.createMethod( sourceProperty );
+                } else if (sourceProperty instanceof PropertyInfo ) {
+                    return this.createGetter(sourceProperty);
+                } else if (sourceProperty instanceof GetAccessorInfo ) {
+                    return this.createGetter(sourceProperty);
+                } else if (sourceProperty instanceof SetAccessorInfo) {
+                    return this.createSetter(sourceProperty);
+                } else if (sourceProperty instanceof ParameterPropertyInfo) {
+                    return this.createParameter(sourceProperty);
                 } else {
                     return [];
                 }
@@ -336,16 +293,15 @@ export class Generator {
             }, []);
     }
 
-    public createCustomCodeMarker( sourceClassName: string, userWrittenCode: { [className: string]: string } | undefined ) {
+    public createCustomCodeMarker( userWrittenCode: string | undefined ) {
         let relevantUserMethods = [ TAB + MARKER_CUSTOM_CODE_BEGIN, '' ];
-        if ( sourceClassName && userWrittenCode && userWrittenCode[sourceClassName] ) {
-            relevantUserMethods.push( userWrittenCode[sourceClassName] );
+        if ( userWrittenCode && userWrittenCode.length > 0 ) {
+            relevantUserMethods.push( userWrittenCode );
         } else {
             relevantUserMethods.push( `${TAB}// Write your methods inside these markers` );
         }
         relevantUserMethods.push( '', TAB + MARKER_CUSTOM_CODE_END );
         return relevantUserMethods;
     }
-    
 
 }
