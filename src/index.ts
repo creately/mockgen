@@ -1,22 +1,36 @@
 #!/usr/bin/env node
+import { ClassInfo } from './types/class-info';
+import { GetAccessorInfo, SetAccessorInfo } from './types/accessor-info';
+import { PropertyInfo, ParameterPropertyInfo } from './types/property-info';
+import { MethodInfo } from './types/method-info';
+import { ClassMember } from './types/class-member';
 
 import * as path from 'path';
 import { statSync, mkdirSync, writeFileSync, readFileSync, existsSync } from 'fs';
 import AST from 'ts-simple-ast';
 import { SourceFile } from 'ts-simple-ast';
 
-import { Generator } from './function-generator';
+import { ClassGenerator } from './class-generator';
 
 import { 
     REGEX_MARKER_CUSTOM_CODE_BEGIN,
     REGEX_MARKER_CUSTOM_CODE_END
 } from './constants';
 
+import {
+    ClassDeclaration,
+    MethodDeclaration,
+    PropertyDeclaration,
+    GetAccessorDeclaration,
+    SetAccessorDeclaration,
+    ParameterDeclaration,
+} from 'ts-simple-ast';
+
 const ast = new AST();
 const tab = '    ';
 const mockClassFilenameSuffix = '.mock.ts';
 
-const mockGenerator = new Generator();
+const mockGenerator = new ClassGenerator();
 
 ast.addSourceFiles('./src/**/*.ts');
 ast.getSourceFiles().forEach(sourceFile => {
@@ -35,20 +49,10 @@ ast.getSourceFiles().forEach(sourceFile => {
 
     const allUserWrittenCodes = getUserWrittenCodeFromMockFile( outputPath );
 
-    const mockedImports = sourceClasses
-        .map(sourceClass => {
-            return `import { ${sourceClass.getName()} } from '${relativePath.replace(/\.ts$/, '')}';`
-        });
-
     const mockedClasses = sourceClasses
         .map(sourceClass => {
-            return [
-                ...mockGenerator.createClassHeader( sourceClass.getName(), sourceClass.getTypeParameters().map( typePram => typePram.getName()) ),
-                ...prefix(tab, mockGenerator.createHelpers( sourceClass.getName() )),
-                ...prefix(tab, mockGenerator.createMembers( sourceClass )),
-                ...mockGenerator.createCustomCodeMarker( 'Mock'+sourceClass.getName(), allUserWrittenCodes ),
-                ...mockGenerator.createClassFooter(),
-            ];
+            let userWrittenCodes = allUserWrittenCodes ? allUserWrittenCodes[ 'Mock' + sourceClass.getName() ] : undefined;
+            return createMockClass( sourceClass, userWrittenCodes, outputPath, relativePath ); 
         })
         .reduce((acc: string[], next: string[]) => {
             return acc.concat(next);
@@ -56,8 +60,6 @@ ast.getSourceFiles().forEach(sourceFile => {
 
     const mockedSource = [
         '// tslint:disable',
-        '',
-        ...mockedImports,
         '',
         ...mockedClasses,
         '',
@@ -72,14 +74,6 @@ ast.getSourceFiles().forEach(sourceFile => {
     writeFileSync(outputPath, mockedSource);
 
 });
-
-function upperCamelCase(str: string): string {
-    return str[0].toUpperCase() + str.slice(1);
-}
-
-function prefix(str: string, lines: string[]): string[] {
-    return lines.map(line => line !== '' ? str + line : '');
-}
 
 function getUserWrittenCodeFromMockFile( filepath: string ) {
     if (!existsSync( filepath )) {
@@ -118,4 +112,59 @@ function getUserWrittenCodeFromMockFile( filepath: string ) {
     }
 
     return userMethods;
+}
+
+function createMockClass( sourceClass: ClassDeclaration, userWrittenCodes: string | undefined, 
+    outputPath: string, parentClassPath: string ) {
+        const classMembers = createClassMembers( sourceClass );
+        const mockClass = new ClassInfo( sourceClass.getName(), outputPath, parentClassPath );
+        mockClass.userWrittenCodes = userWrittenCodes;
+        mockClass.members = (classMembers) as ClassMember[];
+        mockClass.typeParameters = sourceClass.getTypeParameters().map( typeParams => typeParams.getName());
+
+        return mockGenerator.createClass( mockClass );
+}
+
+function createClassMembers(sourceClass: ClassDeclaration): (ClassMember | undefined )[] {
+    return sourceClass.getAllMembers()
+        .map(sourceProperty => {
+            let property: ClassMember | undefined = undefined;
+            if (sourceProperty instanceof MethodDeclaration) {
+                property = new MethodInfo( 
+                    sourceProperty.getName(),
+                    sourceProperty.getScope(),
+                    !!sourceProperty.getStaticKeyword(),
+                    !!sourceProperty.getAbstractKeyword()
+                );
+            } else if (sourceProperty instanceof PropertyDeclaration ) {
+                property = new PropertyInfo( 
+                    sourceProperty.getName(),
+                    sourceProperty.getScope(),
+                    'any',
+                    !!sourceProperty.getStaticKeyword(),
+                    !!sourceProperty.getAbstractKeyword()
+                );
+            } else if (sourceProperty instanceof GetAccessorDeclaration ) {
+                property = new GetAccessorInfo( 
+                    sourceProperty.getName(),
+                    sourceProperty.getScope(),
+                    'any',
+                    !!sourceProperty.getStaticKeyword(),
+                    !!sourceProperty.getAbstractKeyword()
+                );
+            } else if (sourceProperty instanceof SetAccessorDeclaration) {
+                property = new SetAccessorInfo( 
+                    sourceProperty.getName(),
+                    sourceProperty.getScope(),
+                    !!sourceProperty.getStaticKeyword(),
+                    !!sourceProperty.getAbstractKeyword()
+                );
+            } else if (sourceProperty instanceof ParameterDeclaration) {
+                property = new ParameterPropertyInfo( 
+                    sourceProperty.getName(),
+                    sourceProperty.getScope()
+                );
+            } 
+            return property;
+        }).filter( m => m != undefined );
 }

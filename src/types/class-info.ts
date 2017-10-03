@@ -10,7 +10,7 @@ export class ClassInfo {
 
     private _members: ClassMember[];
     private _typeParameters: string[];
-    private _userWrittenCodes: string;
+    private _userWrittenCodes: string | undefined;
     
     public get members() {
         return this._members;
@@ -40,7 +40,7 @@ export class ClassInfo {
         return this._userWrittenCodes;
     }
     
-    public set userWrittenCodes( v: string) {
+    public set userWrittenCodes( v: string | undefined) {
         this._userWrittenCodes = v;
     }
     
