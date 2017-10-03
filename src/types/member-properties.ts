@@ -1,4 +1,4 @@
-export declare enum MemberKind {
+export enum MemberKind {
     Method = 'MethodDeclaration',
     Property = 'PropertyDeclaration',
     Getter = 'GetAccessorDeclaration',
@@ -6,7 +6,7 @@ export declare enum MemberKind {
     ParameterProperty = 'ParameterDeclaration'
 }
 
-export declare enum Scope {
+export enum Scope {
     Public = 'public',
     Protected = 'protected',
     Private = 'private',
