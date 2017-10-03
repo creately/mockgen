@@ -274,15 +274,15 @@ export class FunctionGenerator {
     public createMembers( sourceProperties: ClassMember[] ): string[] {
         return sourceProperties.map(
             sourceProperty => {
-                if (sourceProperty instanceof MethodInfo) {
+                if (sourceProperty.kindName == MemberKind.Method) {
                     return this.createMethod( sourceProperty );
-                } else if (sourceProperty instanceof PropertyInfo ) {
+                } else if (sourceProperty.kindName == MemberKind.Property ) {
                     return this.createGetter(sourceProperty);
-                } else if (sourceProperty instanceof GetAccessorInfo ) {
+                } else if (sourceProperty.kindName == MemberKind.Getter ) {
                     return this.createGetter(sourceProperty);
-                } else if (sourceProperty instanceof SetAccessorInfo) {
+                } else if (sourceProperty.kindName == MemberKind.Setter) {
                     return this.createSetter(sourceProperty);
-                } else if (sourceProperty instanceof ParameterPropertyInfo) {
+                } else if (sourceProperty.kindName == MemberKind.ParameterProperty) {
                     return this.createParameter(sourceProperty);
                 } else {
                     return [];
