@@ -23,7 +23,7 @@ export class ClassGenerator {
         return [
             ...this.createImport( sourceClass.parentClassName, sourceClass.parentClassPath ),
             ...this.mockFunctionGenerator.createClassHeader( sourceClass.parentClassName, sourceClass.typeParameters ),
-            ...this.prefix(TAB, this.mockFunctionGenerator.createHelpers( sourceClass.name )),
+            ...this.prefix(TAB, this.mockFunctionGenerator.createHelpers( sourceClass.parentClassName )),
             ...this.prefix(TAB, this.mockFunctionGenerator.createMembers( sourceClass.members )),
             ...this.mockFunctionGenerator.createCustomCodeMarker( sourceClass.userWrittenCodes ),
             ...this.mockFunctionGenerator.createClassFooter(),
