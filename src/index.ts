@@ -1,23 +1,10 @@
 #!/usr/bin/env node
-import { ClassInfo } from './types/class-info';
-import { GetAccessorInfo, SetAccessorInfo } from './types/accessor-info';
-import { PropertyInfo, ParameterPropertyInfo } from './types/property-info';
-import { MethodInfo } from './types/method-info';
-import { ClassMember } from './types/class-member';
-
 import * as path from 'path';
 import { statSync, mkdirSync, writeFileSync, readFileSync, existsSync } from 'fs';
 import AST from 'ts-simple-ast';
-import { SourceFile } from 'ts-simple-ast';
-
-import { ClassGenerator } from './class-generator';
-
-import { 
-    REGEX_MARKER_CUSTOM_CODE_BEGIN,
-    REGEX_MARKER_CUSTOM_CODE_END
-} from './constants';
 
 import {
+    SourceFile,
     ClassDeclaration,
     MethodDeclaration,
     PropertyDeclaration,
@@ -26,10 +13,15 @@ import {
     ParameterDeclaration,
 } from 'ts-simple-ast';
 
-const ast = new AST();
-const tab = '    ';
-const mockClassFilenameSuffix = '.mock.ts';
+import { ClassInfo } from './types/class-info';
+import { GetAccessorInfo, SetAccessorInfo } from './types/accessor-info';
+import { PropertyInfo, ParameterPropertyInfo } from './types/property-info';
+import { MethodInfo } from './types/method-info';
+import { ClassMember } from './types/class-member';
+import { ClassGenerator } from './class-generator';
+import { REGEX_MARKER_CUSTOM_CODE_BEGIN, REGEX_MARKER_CUSTOM_CODE_END, FILENAME_SUFFIX_MOCK_CLASS } from './constants';
 
+const ast = new AST();
 const mockGenerator = new ClassGenerator();
 
 ast.addSourceFiles('./src/**/*.ts');
@@ -43,7 +35,7 @@ ast.getSourceFiles().forEach(sourceFile => {
     const rootPath = process.cwd().replace( /\\/g, '/' );
     const sourcePath = sourceFile.getFilePath();
 
-    const outputPath = sourcePath.replace(rootPath + '/src', rootPath + '/test').replace(/\.ts$/, mockClassFilenameSuffix);
+    const outputPath = sourcePath.replace(rootPath + '/src', rootPath + '/test').replace(/\.ts$/, FILENAME_SUFFIX_MOCK_CLASS);
     const outputDirname = path.dirname(outputPath);
     const relativePath = path.relative(outputDirname, sourcePath).replace( /\\/g, '/' );
 

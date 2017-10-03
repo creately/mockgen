@@ -5,3 +5,5 @@ export const REGEX_MARKER_CUSTOM_CODE_BEGIN: RegExp = /(\/\/ ts-mockgen:custom-c
 export const REGEX_MARKER_CUSTOM_CODE_END: RegExp = /(\/\/ ts-mockgen:custom-code-end)/g;
 
 export const TAB = '    ';
+
+export const FILENAME_SUFFIX_MOCK_CLASS = '.mock.ts';
