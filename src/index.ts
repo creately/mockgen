@@ -115,21 +115,18 @@ function createHelpers(sourceClass: ClassDeclaration): string[] {
         `${tab}return this.\$class[field].call( this, ...args );`,
         `}`,
         `public static \$createGetterFor( field: string ): jasmine.Spy {`,
-        `${tab}if ( !this.\$spies[field]) {`,
-        `${tab}${tab}this.\$spies[field] = spyOnProperty( this.\$class, field, 'get' );`,
-        `${tab}}`,
+        `${tab}this.\$spies[field] = spyOnProperty( this.\$class, field, 'get' );`,
         `${tab}return this.\$spies[field];`,
         `}`,
         `public static \$createSetterFor( field: string ): jasmine.Spy {`,
-        `${tab}if ( !this.\$spies[field]) {`,
-        `${tab}${tab}this.\$spies[field] = spyOnProperty( this.\$class, field, 'set' );`,
-        `${tab}}`,
+        `${tab}this.\$spies[field] = spyOnProperty( this.\$class, field, 'set' );`,
         `${tab}return this.\$spies[field];`,
         `}`,
         `public static \$createSpyFor( field: string ): jasmine.Spy {`,
-        `${tab}if ( !this.\$spies[field]) {`,
-        `${tab}${tab}this.\$spies[field] = spyOn( this.\$class, field );`,
-        `${tab}}`,
+        `${tab}this.\$spies[field] = spyOn( this.\$class, field );`,
+        `${tab}return this.\$spies[field];`,
+        `}`,
+        `public static \$getSpyFor( field: string ): jasmine.Spy {`,
         `${tab}return this.\$spies[field];`,
         `}`,
         ``,
@@ -151,21 +148,18 @@ function createHelpers(sourceClass: ClassDeclaration): string[] {
         `${tab}return this.\$prototype[field].call( this, ...args );`,
         `}`,
         `public \$createGetterFor( field: string ): jasmine.Spy {`,
-        `${tab}if ( !this.\$spies[field]) {`,
-        `${tab}${tab}this.\$spies[field] = spyOnProperty( this.\$instance, field, 'get' );`,
-        `${tab}}`,
+        `${tab}this.\$spies[field] = spyOnProperty( this.\$instance, field, 'get' );`,
         `${tab}return this.\$spies[field];`,
         `}`,
         `public \$createSetterFor( field: string ): jasmine.Spy {`,
-        `${tab}if ( !this.\$spies[field]) {`,
-        `${tab}${tab}this.\$spies[field] = spyOnProperty( this.\$instance, field, 'set' );`,
-        `${tab}}`,
+        `${tab}this.\$spies[field] = spyOnProperty( this.\$instance, field, 'set' );`,
         `${tab}return this.\$spies[field];`,
         `}`,
         `public \$createSpyFor( field: string ): jasmine.Spy {`,
-        `${tab}if ( !this.\$spies[field]) {`,
-        `${tab}${tab}this.\$spies[field] = spyOn( this.\$instance, field );`,
-        `${tab}}`,
+        `${tab}this.\$spies[field] = spyOn( this.\$instance, field );`,
+        `${tab}return this.\$spies[field];`,
+        `}`,
+        `public \$getSpyFor( field: string ): jasmine.Spy {`,
         `${tab}return this.\$spies[field];`,
         `}`,
     ];
@@ -190,6 +184,9 @@ function createMethod(sourceProperty: MethodDeclaration): string[] {
         lines.push(
             `public static \$createSpyFor${upperCamelCase(propertyName)}() {`,
             `${tab}return this.\$createSpyFor( '${propertyName}' );`,
+            `}`,
+            `public static \$getSpyFor${upperCamelCase(propertyName)}() {`,
+            `${tab}return this.\$getSpyFor( '${propertyName}' );`,
             `}`,
         );
     } else {
@@ -216,6 +213,9 @@ function createMethod(sourceProperty: MethodDeclaration): string[] {
             `public \$createSpyFor${upperCamelCase(propertyName)}() {`,
             `${tab}return this.\$createSpyFor( '${propertyName}' );`,
             `}`,
+            `public \$getSpyFor${upperCamelCase(propertyName)}() {`,
+            `${tab}return this.\$getSpyFor( '${propertyName}' );`,
+            `}`,
         );
     }
     return lines;
@@ -241,6 +241,9 @@ function createGetter(sourceProperty: PropertyDeclaration | GetAccessorDeclarati
             `public static \$createGetterFor${upperCamelCase(propertyName)}() {`,
             `${tab}return this.\$createGetterFor( '${propertyName}' );`,
             `}`,
+            `public static \$getSpyFor${upperCamelCase(propertyName)}() {`,
+            `${tab}return this.\$getSpyFor( '${propertyName}' );`,
+            `}`,
         );
     } else {
         if (sourceProperty.getAbstractKeyword()) {
@@ -265,6 +268,9 @@ function createGetter(sourceProperty: PropertyDeclaration | GetAccessorDeclarati
             `public \$createGetterFor${upperCamelCase(propertyName)}() {`,
             `${tab}return this.\$createGetterFor( '${propertyName}' );`,
             `}`,
+            `public \$getSpyFor${upperCamelCase(propertyName)}() {`,
+            `${tab}return this.\$getSpyFor( '${propertyName}' );`,
+            `}`,
         );
     }
     return lines;
@@ -283,6 +289,9 @@ function createSetter(sourceProperty: SetAccessorDeclaration): string[] {
             `public static \$createSetterFor${upperCamelCase(propertyName)}() {`,
             `${tab}return this.\$createSetterFor( '${propertyName}' );`,
             `}`,
+            `public static \$getSpyFor${upperCamelCase(propertyName)}() {`,
+            `${tab}return this.\$getSpyFor( '${propertyName}' );`,
+            `}`,
         );
     } else {
         if (sourceProperty.getAbstractKeyword()) {
@@ -294,6 +303,9 @@ function createSetter(sourceProperty: SetAccessorDeclaration): string[] {
         lines.push(
             `public \$createSetterFor${upperCamelCase(propertyName)}() {`,
             `${tab}return this.\$createSetterFor( '${propertyName}' );`,
+            `}`,
+            `public \$getSpyFor${upperCamelCase(propertyName)}() {`,
+            `${tab}return this.\$getSpyFor( '${propertyName}' );`,
             `}`,
         );
     }
@@ -319,6 +331,9 @@ function createParameter(sourceProperty: ParameterDeclaration): string[] {
         lines.push(
             `public \$createGetterFor${upperCamelCase(parameterName)}() {`,
             `${tab}return this.\$createGetterFor( '${parameterName}' );`,
+            `}`,
+            `public \$getSpyFor${upperCamelCase(parameterName)}() {`,
+            `${tab}return this.\$getSpyFor( '${parameterName}' );`,
             `}`,
         );
     }
