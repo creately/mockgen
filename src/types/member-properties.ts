@@ -11,8 +11,3 @@ export enum Scope {
     Protected = 'protected',
     Private = 'private',
 }
-
-export interface IParameter {
-    paramName: string;
-    paramType: string;
-}

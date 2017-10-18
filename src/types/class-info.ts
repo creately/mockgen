@@ -1,4 +1,4 @@
-import { ClassMember } from './class-member';
+import { IClassMember } from './member-types';
 
 export class ClassInfo {
     
@@ -8,7 +8,7 @@ export class ClassInfo {
         private _parentClassPath: string
     ){}
 
-    private _members: ClassMember[];
+    private _members: IClassMember[];
     private _typeParameters: string[];
     private _userWrittenCodes: string | undefined;
     
@@ -16,7 +16,7 @@ export class ClassInfo {
         return this._members;
     }
     
-    public set members( v: ClassMember[]) {
+    public set members( v: IClassMember[]) {
         this._members = v;
     }
     
