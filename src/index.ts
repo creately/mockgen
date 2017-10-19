@@ -19,7 +19,17 @@ const ast = new AST();
 const tab = '    ';
 const mockClassFilenameSuffix = '.mock.ts';
 
-ast.addSourceFiles('./src/**/*.ts');
+const passedArguments: string[] = process.argv.slice(2);
+const defaultSourcePath = './src/**/*.ts';
+const rootPath = process.cwd().replace( /\\/g, '/' );
+const providedSourcePaths = passedArguments.map( args => rootPath + args.replace( /^(\.)/g, '' ));
+
+if (providedSourcePaths.length > 0) {
+    ast.addSourceFiles( ...providedSourcePaths );
+} else {
+    ast.addSourceFiles( defaultSourcePath );
+}
+
 ast.getSourceFiles().forEach(sourceFile => {
     const sourceClasses = sourceFile.getClasses();
 
@@ -27,9 +37,7 @@ ast.getSourceFiles().forEach(sourceFile => {
         return;
     }
 
-    const rootPath = process.cwd().replace( /\\/g, '/' );
     const sourcePath = sourceFile.getFilePath();
-
     const outputPath = sourcePath.replace(rootPath + '/src', rootPath + '/test');
     const outputDirname = path.dirname(outputPath);
     const relativePath = path.relative(outputDirname, sourcePath).replace( /\\/g, '/' );
