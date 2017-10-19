@@ -13,11 +13,17 @@ import {
 } from 'ts-simple-ast';
 
 import { ClassInfo } from './types/class-info';
-import { GetAccessorInfo, SetAccessorInfo } from './types/accessor-info';
-import { PropertyInfo, ParameterPropertyInfo } from './types/property-info';
-import { MethodInfo } from './types/method-info';
-import { ClassMember } from './types/class-member';
+import { 
+    IClassMember, 
+    IGetAccessorInfo, 
+    ISetAccessorInfo, 
+    IMethodInfo,
+    IParameter,
+    IPropertyInfo,
+    IParameterPropertyInfo
+} from './types/member-types';
 import { ClassGenerator } from './class-generator';
+import { MemberKind, Scope } from './types/member-properties';
 import { REGEX_MARKER_CUSTOM_CODE_BEGIN, REGEX_MARKER_CUSTOM_CODE_END, FILENAME_SUFFIX_MOCK_CLASS } from './constants';
 
 export class MockGenerator {
@@ -128,53 +134,73 @@ export class MockGenerator {
             const classMembers = this.createClassMembers( sourceClass );
             const mockClass = new ClassInfo( sourceClass.getName(), outputPath, parentClassPath );
             mockClass.userWrittenCodes = userWrittenCodes;
-            mockClass.members = (classMembers) as ClassMember[];
+            mockClass.members = (classMembers) as IClassMember[];
             mockClass.typeParameters = sourceClass.getTypeParameters().map( typeParams => typeParams.getName());
     
             return this.mockGenerator.createClass( mockClass );
     }
+
+    createParameters( params: ParameterDeclaration[] ) : IParameter[] {
+        return params.map( param => ({ paramName: param.getName(), paramType: param.getType().getText() }));
+    }
     
-    private createClassMembers(sourceClass: ClassDeclaration): (ClassMember | undefined )[] {
+    private createClassMembers(sourceClass: ClassDeclaration): (IClassMember | undefined )[] {
         return sourceClass.getAllMembers()
             .map(sourceProperty => {
-                let property: ClassMember | undefined = undefined;
                 if (sourceProperty instanceof MethodDeclaration) {
-                    property = new MethodInfo( 
-                        sourceProperty.getName(),
-                        sourceProperty.getScope(),
-                        !!sourceProperty.getStaticKeyword(),
-                        !!sourceProperty.getAbstractKeyword()
-                    );
+                    const method: IMethodInfo = {
+                        name: sourceProperty.getName(),
+                        scope: sourceProperty.getScope(),
+                        isStatic: !!sourceProperty.getStaticKeyword(),
+                        isAbstract: !!sourceProperty.getAbstractKeyword(),
+                        kindName: MemberKind.Method,
+                        params: this.createParameters( sourceProperty.getParameters()),
+                        returnType: sourceProperty.getReturnType().getText()
+                    };
+                    return method;
                 } else if (sourceProperty instanceof PropertyDeclaration ) {
-                    property = new PropertyInfo( 
-                        sourceProperty.getName(),
-                        sourceProperty.getScope(),
-                        'any',
-                        !!sourceProperty.getStaticKeyword(),
-                        !!sourceProperty.getAbstractKeyword()
-                    );
+                    const prop: IPropertyInfo = {
+                        name: sourceProperty.getName(),
+                        scope: sourceProperty.getScope(),
+                        isStatic: !!sourceProperty.getStaticKeyword(),
+                        isAbstract: !!sourceProperty.getAbstractKeyword(),
+                        kindName: MemberKind.Property,
+                        type: sourceProperty.getType().getText() || 'any'
+                    };
+                    return prop;
                 } else if (sourceProperty instanceof GetAccessorDeclaration ) {
-                    property = new GetAccessorInfo( 
-                        sourceProperty.getName(),
-                        sourceProperty.getScope(),
-                        'any',
-                        !!sourceProperty.getStaticKeyword(),
-                        !!sourceProperty.getAbstractKeyword()
-                    );
+                    const getter: IGetAccessorInfo = {
+                        name: sourceProperty.getName(),
+                        scope: sourceProperty.getScope(),
+                        isStatic: !!sourceProperty.getStaticKeyword(),
+                        isAbstract: !!sourceProperty.getAbstractKeyword(),
+                        kindName: MemberKind.Getter,
+                        returnType: sourceProperty.getReturnType().getText() || 'any'
+                    };
+                    return getter;
                 } else if (sourceProperty instanceof SetAccessorDeclaration) {
-                    property = new SetAccessorInfo( 
-                        sourceProperty.getName(),
-                        sourceProperty.getScope(),
-                        !!sourceProperty.getStaticKeyword(),
-                        !!sourceProperty.getAbstractKeyword()
-                    );
+                    const setter: ISetAccessorInfo = {
+                        name: sourceProperty.getName(),
+                        scope: sourceProperty.getScope(),
+                        isStatic: !!sourceProperty.getStaticKeyword(),
+                        isAbstract: !!sourceProperty.getAbstractKeyword(),
+                        kindName: MemberKind.Setter,
+                        returnType: sourceProperty.getReturnType().getText() || 'any',
+                        params: this.createParameters( sourceProperty.getParameters())
+                    };
+                    return setter;
                 } else if (sourceProperty instanceof ParameterDeclaration) {
-                    property = new ParameterPropertyInfo( 
-                        sourceProperty.getName(),
-                        sourceProperty.getScope()
-                    );
+                    const paramDeclaration: IParameterPropertyInfo = {
+                        name: sourceProperty.getName(),
+                        scope: sourceProperty.getScope(),
+                        kindName: MemberKind.ParameterProperty,
+                        type: sourceProperty.getType().getText() || 'any',
+                        isStatic: false,
+                        isAbstract: false
+                    };
+                    return paramDeclaration;
                 } 
-                return property;
+                return undefined;
             }).filter( m => m != undefined );
     }
     

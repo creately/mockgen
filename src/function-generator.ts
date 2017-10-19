@@ -1,10 +1,15 @@
-import { MethodInfo } from './types/method-info';
-import { GetAccessorInfo, SetAccessorInfo } from './types/accessor-info';
-import { ParameterPropertyInfo, PropertyInfo } from './types/property-info';
-import { ClassMember } from './types/class-member';
+import { 
+    IClassMember,
+    IGetAccessorInfo, 
+    ISetAccessorInfo,
+    IMethodInfo, 
+    IParameter, 
+    IParameterPropertyInfo, 
+    IPropertyInfo 
+} from './types/member-types';
 
 import { MARKER_CUSTOM_CODE_BEGIN, MARKER_CUSTOM_CODE_END, TAB } from './constants';
-import { MemberKind } from './types/member-properties';
+import { MemberKind, Scope } from './types/member-properties';
 
 /**
  * This class helps to mock functions, getters and setter of given class
@@ -110,17 +115,17 @@ export class FunctionGenerator {
         ];
     }
     
-    private createMethod( sourceProperty: ClassMember ): string[] {
+    private createMethod( sourceProperty: IMethodInfo ): string[] {
         const lines = [''];
         const propertyName = sourceProperty.name;
-        if (propertyName) {
+        if ( propertyName ) {
             lines.push(
                 `/**`,
                 ` * ${propertyName}`,
                 ` */`,
             );
-            if (sourceProperty.isStatic) {
-                if (sourceProperty.isNotPublic()) {
+            if ( sourceProperty.isStatic ) {
+                if ( sourceProperty.scope != Scope.Public ) {
                     lines.push(
                         `public static \$call${this.upperCamelCase(propertyName)}( ...args: any[]) {`,
                         `${TAB}return this.$call( '${propertyName}', ...args );`,
@@ -140,13 +145,13 @@ export class FunctionGenerator {
                         `${TAB}return undefined as any;`,
                         `}`,
                     );
-                } else if ( sourceProperty.isProtected() ) {
+                } else if ( sourceProperty.scope == Scope.Protected ) {
                     lines.push(
                         `public ${propertyName}( ...args: any[]) {`,
                         `${TAB}return this.$call( '${propertyName}', ...args );`,
                         `}`,
                     );
-                } else if ( sourceProperty.isPrivate() ) {
+                } else if ( sourceProperty.scope == Scope.Private ) {
                     lines.push(
                         `public \$call${this.upperCamelCase(propertyName)}( ...args: any[]) {`,
                         `${TAB}return this.$call( '${propertyName}', ...args );`,
@@ -163,7 +168,7 @@ export class FunctionGenerator {
         return lines;
     }
     
-    private createGetter(sourceProperty: ClassMember): string[] {
+    private createGetter(sourceProperty: IClassMember): string[] {
         const lines = [''];
         const propertyName = sourceProperty.name;
         if (propertyName) {
@@ -173,7 +178,7 @@ export class FunctionGenerator {
                 ` */`,
             );
             if (sourceProperty.isStatic) {
-                if (sourceProperty.isNotPublic()) {
+                if ( sourceProperty.scope != Scope.Public ) {
                     lines.push(
                         `public static \$get${this.upperCamelCase(propertyName)}() {`,
                         `${TAB}return this.$get( '${propertyName}' );`,
@@ -197,7 +202,7 @@ export class FunctionGenerator {
                             `}`,
                         );
                     }
-                } else if (sourceProperty.isNotPublic()) {
+                } else if ( sourceProperty.scope != Scope.Public ) {
                     lines.push(
                         `public \$get${this.upperCamelCase(propertyName)}() {`,
                         `${TAB}return this.$get( '${propertyName}' );`,
@@ -214,7 +219,7 @@ export class FunctionGenerator {
         return lines;
     }
     
-    private createSetter(sourceProperty: ClassMember): string[] {
+    private createSetter(sourceProperty: ISetAccessorInfo): string[] {
         const lines = [''];
         const propertyName = sourceProperty.name;
         if( propertyName  ){
@@ -246,7 +251,7 @@ export class FunctionGenerator {
         return lines;
     }
     
-    private createParameter(sourceProperty: ClassMember): string[] {
+    private createParameter(sourceProperty: IParameterPropertyInfo): string[] {
         const lines = [''];
         const parameterName = sourceProperty.name;
         lines.push(
@@ -255,7 +260,7 @@ export class FunctionGenerator {
             ` */`,
         );
         if (parameterName) {
-            if (sourceProperty.isNotPublic()) {
+            if ( sourceProperty.scope != Scope.Public ) {
                 lines.push(
                     `public \$get${this.upperCamelCase(parameterName)}() {`,
                     `${TAB}return this.$get( '${parameterName}' );`,
@@ -271,19 +276,17 @@ export class FunctionGenerator {
         return lines;
     }
     
-    public createMembers( sourceProperties: ClassMember[] ): string[] {
+    public createMembers( sourceProperties: IClassMember[] ): string[] {
         return sourceProperties.map(
             sourceProperty => {
                 if (sourceProperty.kindName == MemberKind.Method) {
-                    return this.createMethod( sourceProperty );
-                } else if (sourceProperty.kindName == MemberKind.Property ) {
-                    return this.createGetter(sourceProperty);
-                } else if (sourceProperty.kindName == MemberKind.Getter ) {
+                    return this.createMethod( sourceProperty as IMethodInfo);
+                } else if (sourceProperty.kindName == MemberKind.Property || sourceProperty.kindName == MemberKind.Getter ) {
                     return this.createGetter(sourceProperty);
                 } else if (sourceProperty.kindName == MemberKind.Setter) {
-                    return this.createSetter(sourceProperty);
-                } else if (sourceProperty.kindName == MemberKind.ParameterProperty) {
-                    return this.createParameter(sourceProperty);
+                    return this.createSetter(sourceProperty as ISetAccessorInfo);
+                } else if ( sourceProperty.kindName == MemberKind.ParameterProperty) {
+                    return this.createParameter(sourceProperty as IParameterPropertyInfo);
                 } else {
                     return [];
                 }

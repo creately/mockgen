@@ -6,43 +6,93 @@ import { MemberKind, Scope } from './member-properties';
  * @since 10/18/2017
  */
 export interface IClassMember {
-    name: string | undefined;
-    scope: Scope | undefined;
+    
+    /**
+     * States whether the member is static
+     * @type {boolean}
+     * @memberof IClassMember
+     */
     isStatic: boolean;
-    isAbstract: boolean;
-    kindName: MemberKind;
-}
-
-export interface IMethodInfo extends IClassMember {
 
     /**
-     * This hold all the parameter of the method
-     * @private
-     * @type Array <MethodParameter>
+     * States whether the member is abstract
+     * @type {boolean}
+     * @memberof IClassMember
      */
-    params: IParameter[];
+    isAbstract: boolean;
 
-    returnType: string;
+    /**
+     * Name of the member
+     * @type {(string | undefined)}
+     * @memberof IClassMember
+     */
+    name: string | undefined;
+    
+    /**
+     * Scope of the member
+     * @type {(Scope | undefined)}
+     * @memberof IClassMember
+     */
+    scope: Scope | undefined;
+
+    /**
+     * This defines the type of member e.g. Method, a property
+     * @type {MemberKind}
+     * @memberof IClassMember
+     */
+    kindName: MemberKind;
+
 }
 
+export interface IGetAccessorInfo extends IClassMember {
+    
+    /**
+     * This is the return type of the method
+     * @type String
+     * @memberof IGetAccessorInfo
+     */
+    returnType: string;
+
+}
+
+export interface IMethodInfo extends IGetAccessorInfo {
+
+    /**
+     * This hold all the parameters of the method
+     * @type Array <MethodParameter>
+     * @memberof IMethodInfo
+     */
+    params: IParameter[];  
+
+}
+
+export interface ISetAccessorInfo extends IMethodInfo {}
+
 export interface IPropertyInfo extends IClassMember {
+    /**
+     * Type of the property
+     * @type {string}
+     * @memberof IPropertyInfo
+     */
     type : string;
 }
 
-export interface IParameterPropertyInfo extends IPropertyInfo {
-    
-}
-
-export interface IGetAccessorInfo extends IMethodInfo {
-
-}
-
-export interface ISetAccessorInfo extends IMethodInfo {
-
-}
+export interface IParameterPropertyInfo extends IPropertyInfo {}
 
 export interface IParameter {
-    paramName: string;
+    
+    /**
+     * Identifier of parameter
+     * @type {(string | undefined)}
+     * @memberof IParameter
+     */
+    paramName: string | undefined;
+    
+    /**
+     * Type of the parameter
+     * @type {string}
+     * @memberof IParameter
+     */
     paramType: string;
 }
 
