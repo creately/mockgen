@@ -7,7 +7,7 @@
     "mockgen": "./index.js"
   },
   "scripts": {
-    "build": "npm run clean && tsc",
+    "build": "tsc",
     "clean": "rm -rf dist example/test",
     "test": "npm run build && cd example && node ../dist/index.js"
   },
@@ -16,7 +16,9 @@
   "dependencies": {
     "@types/jasmine": "^2.6.0",
     "@types/node": "^8.0.26",
+    "@types/yargs": "^8.0.2",
     "ts-simple-ast": "^0.60.0",
-    "typescript": "^2.5.2"
+    "typescript": "^2.5.2",
+    "yargs": "^9.0.1"
   }
 }
