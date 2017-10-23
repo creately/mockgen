@@ -1,15 +1,15 @@
 {
-  "name": "mockgen",
+  "name": "@creately/mockgen",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
   "bin": {
-    "mockgen": "./index.js"
+    "mockgen": "./dist/index.js"
   },
   "scripts": {
     "build": "npm run clean && tsc",
     "clean": "rm -rf dist example/test",
-    "test": "npm run build && cd example && node ../dist/index.js"
+    "test": "npm run build && cd example && node ../dist/index.js",
+    "prepublish": "npm run build"
   },
   "keywords": [],
   "license": "MIT",
