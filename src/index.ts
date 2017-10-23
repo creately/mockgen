@@ -348,8 +348,16 @@ function createParameter(sourceProperty: ParameterDeclaration): string[] {
     return lines;
 }
 
+function getAbstractMethods(sourceClass: ClassDeclaration): MethodDeclaration[] {
+    const list: any = sourceClass.getChildSyntaxList();
+    return list
+        .getChildren()
+        .filter((node: any) => node.getKindName() === 'MethodDeclaration' && node.getAbstractKeyword());
+}
+
 function createMembers(sourceClass: ClassDeclaration): string[] {
     return sourceClass.getAllMembers()
+        .concat(getAbstractMethods( sourceClass ))
         .map(sourceProperty => {
             if (sourceProperty instanceof MethodDeclaration) {
                 return createMethod(sourceProperty);
