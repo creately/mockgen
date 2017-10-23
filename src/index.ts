@@ -348,6 +348,10 @@ function createParameter(sourceProperty: ParameterDeclaration): string[] {
     return lines;
 }
 
+/**
+ * ts-simple-ast sourceClass.getAllMembers() does not return abstract methods.
+ * Github Issue: https://github.com/dsherret/ts-simple-ast/issues/102
+ */
 function getAbstractMethods(sourceClass: ClassDeclaration): MethodDeclaration[] {
     const list: any = sourceClass.getChildSyntaxList();
     return list
