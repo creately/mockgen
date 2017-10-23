@@ -1,0 +1,6 @@
+.git
+src
+example
+node_modules
+readme.md
+tsconfig.json
