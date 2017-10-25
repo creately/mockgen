@@ -368,9 +368,58 @@ function createParameter(sourceProperty: ParameterDeclaration): string[] {
     return lines;
 }
 
+/**
+ * ts-simple-ast sourceClass.getAllMembers() does not return abstract methods.
+ * Github Issue: https://github.com/dsherret/ts-simple-ast/issues/102
+ */
+function getAbstractMethods(sourceClass: ClassDeclaration): MethodDeclaration[] {
+    const list: any = sourceClass.getChildSyntaxList();
+    return list
+        .getChildren()
+        .filter((node: any) => node.getKindName() === 'MethodDeclaration' && node.getAbstractKeyword());
+}
+
+function getParentClass(sourceClass: ClassDeclaration): ClassDeclaration | null {
+    const ext = sourceClass.getExtends();
+    if (!ext) {
+        return null;
+    }
+    const parentName = ext.getText().split('<')[0];
+    const parentPath = ext
+        .getSourceFile()
+        .getImports()
+        .filter(imp => imp.getNamedImports().filter(named => named.getText() === parentName))[0]
+        .getModuleSpecifier();
+    const sourceFileDir = path.dirname(sourceClass.getSourceFile().getFilePath());
+    const resolvedPath = path.resolve(sourceFileDir, parentPath + '.ts');
+    const parentFile = ast.getSourceFile(resolvedPath);
+    if (!parentFile) {
+        return null;
+    }
+    const parentClass = parentFile.getClasses().filter(c => c.getName() === parentName)[0];
+    return parentClass;
+}
+
+function getInheritedMembers(sourceClass: ClassDeclaration) {
+    const parent = getParentClass(sourceClass);
+    if (!parent) {
+        return [];
+    }
+    return parent.getAllMembers();
+}
+
 function createMembers(sourceClass: ClassDeclaration): string[] {
+    const addedMembers: any = {};
     return sourceClass.getAllMembers()
+        .concat(getAbstractMethods( sourceClass ))
+        .concat(getInheritedMembers( sourceClass ))
         .map(sourceProperty => {
+            const name = (sourceProperty as any).getName && (sourceProperty as any).getName();
+            if (addedMembers[name]) {
+                return [];
+            } else {
+                addedMembers[name] = true;
+            }
             if (sourceProperty instanceof MethodDeclaration) {
                 return createMethod(sourceProperty);
             } else if (sourceProperty instanceof PropertyDeclaration || sourceProperty instanceof GetAccessorDeclaration) {

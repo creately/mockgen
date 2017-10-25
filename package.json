@@ -1,21 +1,21 @@
 {
-  "name": "mockgen",
-  "version": "1.0.0",
+  "name": "@creately/mockgen",
+  "version": "1.0.3",
   "description": "",
-  "main": "index.js",
   "bin": {
-    "mockgen": "./index.js"
+    "mockgen": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist example/test",
-    "test": "npm run build && cd example && node ../dist/index.js"
+    "test": "npm run build && cd example && node ../dist/index.js",
+    "prepublish": "npm run build"
   },
   "keywords": [],
   "license": "MIT",
   "dependencies": {
     "@types/jasmine": "^2.6.0",
-    "@types/node": "^8.0.26",
+    "@types/node": "^8.0.46",
     "@types/yargs": "^8.0.2",
     "ts-simple-ast": "^0.60.0",
     "typescript": "^2.5.2",
