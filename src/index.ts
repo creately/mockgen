@@ -20,35 +20,22 @@ import { argv } from 'yargs';
 const ast = new AST();
 const tab = '    ';
 const mockClassFilenameSuffix = '.mock.ts';
-const defaultSourcePath = './src/**/*.ts';
 
 const rootPath = process.cwd().replace( /\\/g, '/' );
 
 let providedSourcePaths;
-let providedOutputDir: string;
-let providedSourceDir: string;
-if ( argv.src && argv.out ) {
-    let sourceDir: string = argv.src.replace( /^(\.)/g, '' );
-    if ( sourceDir.lastIndexOf('/**/*.ts') == -1 ){
-        sourceDir += '/**/*.ts';
-    }
-    const sourceDirFullPath = rootPath + sourceDir;
-    providedSourceDir = sourceDirFullPath.replace( '/**/*.ts', '' );
-    providedOutputDir = rootPath + argv.out.replace( /^(\.)/g, '' );
-    providedSourcePaths = [ sourceDirFullPath ];
+
+const srcDir = rootPath + ( argv.src ? argv.src.replace( /^(\.)/g, '' ) : '/src');
+const outDir = rootPath + ( argv.out ? argv.out.replace( /^(\.)/g, '' ) : '/test');
+const inputs = argv._;
+
+if ( inputs && inputs.length > 0 ) {
+    providedSourcePaths = inputs.map( args => rootPath + args.replace( /^(\.)/g, '' ));
 } else {
-    const passedArguments: string[] = argv._;
-    providedSourcePaths = passedArguments.map( args => rootPath + args.replace( /^(\.)/g, '' ));
+    providedSourcePaths = [ ( srcDir.lastIndexOf( '/**/*.ts' ) == -1 ) ? srcDir + '/**/*.ts' : ''];
 }
 
-if (providedSourcePaths.length > 0) {
-    ast.addSourceFiles( ...providedSourcePaths );
-} else {
-    providedSourceDir = rootPath + '/src';
-    providedOutputDir = rootPath + '/test';
-    ast.addSourceFiles( defaultSourcePath );
-}
-
+ast.addSourceFiles( ...providedSourcePaths );
 ast.getSourceFiles().forEach(sourceFile => {
     const sourceClasses = sourceFile.getClasses();
 
@@ -57,7 +44,7 @@ ast.getSourceFiles().forEach(sourceFile => {
     }
 
     const sourcePath = sourceFile.getFilePath();
-    const outputPath = sourcePath.replace( providedSourceDir, providedOutputDir );
+    const outputPath = sourcePath.replace( srcDir, outDir );
     const outputDirname = path.dirname(outputPath);
     const relativePath = path.relative(outputDirname, sourcePath).replace( /\\/g, '/' );
 
