@@ -32,12 +32,12 @@ if ( argv.src && argv.out ) {
     if ( sourceDir.lastIndexOf('/**/*.ts') == -1 ){
         sourceDir += '/**/*.ts';
     }
-    sourceDir = rootPath + sourceDir;
-    providedSourceDir = sourceDir.replace( '/**/*.ts', '' );
+    const sourceDirFullPath = rootPath + sourceDir;
+    providedSourceDir = sourceDirFullPath.replace( '/**/*.ts', '' );
     providedOutputDir = rootPath + argv.out.replace( /^(\.)/g, '' );
-    providedSourcePaths = [ sourceDir ];
+    providedSourcePaths = [ sourceDirFullPath ];
 } else {
-    const passedArguments: string[] = process.argv.slice(2);
+    const passedArguments: string[] = argv._;
     providedSourcePaths = passedArguments.map( args => rootPath + args.replace( /^(\.)/g, '' ));
 }
 
@@ -49,7 +49,6 @@ if (providedSourcePaths.length > 0) {
     ast.addSourceFiles( defaultSourcePath );
 }
 
-console.info( 'Started mocking classes...' )
 ast.getSourceFiles().forEach(sourceFile => {
     const sourceClasses = sourceFile.getClasses();
 
