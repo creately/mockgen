@@ -15,6 +15,7 @@ import {
     ParameterDeclaration,
 } from 'ts-simple-ast';
 
+import * as mkdirp from 'mkdirp';
 import { argv } from 'yargs';
 
 const ast = new AST();
@@ -26,7 +27,7 @@ const rootPath = process.cwd().replace( /\\/g, '/' );
 let providedSourcePaths;
 
 const srcDir = rootPath + ( argv.src ? argv.src.replace( /^(\.)/g, '' ) : '/src');
-const outDir = rootPath + ( argv.out ? argv.out.replace( /^(\.)/g, '' ) : '/test');
+const outDir = rootPath + ( argv.out ? argv.out.replace( /^(\.)/g, '' ) : '/test/spec');
 const inputs = argv._;
 
 if ( inputs && inputs.length > 0 ) {
@@ -78,7 +79,7 @@ ast.getSourceFiles().forEach(sourceFile => {
     try {
         statSync( outputDirname );
     } catch ( err ) {
-        mkdirSync( outputDirname );
+        mkdirp.sync( outputDirname );
     }
 
     writeFileSync( outputPath, mockedSource );

@@ -14,14 +14,15 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@types/jasmine": "^2.6.0",
-    "@types/node": "^8.0.46",
-    "@types/yargs": "^8.0.2",
+    "mkdirp": "^0.5.1",
     "ts-simple-ast": "^0.60.0",
-    "typescript": "2.5.2",
     "yargs": "^9.0.1"
   },
   "devDependencies": {
-    "rimraf": "^2.6.2"
+    "@types/jasmine": "^2.6.0",
+    "@types/node": "^8.0.46",
+    "@types/yargs": "^8.0.2",
+    "rimraf": "^2.6.2",
+    "typescript": "2.5.2"
   }
 }
