@@ -82,7 +82,7 @@ ast.getSourceFiles().forEach(sourceFile => {
     }
 
     writeFileSync( outputPath, mockedSource );
-    console.info( 'Generated', outputPath );
+    console.info( outputPath );
 });
 
 
