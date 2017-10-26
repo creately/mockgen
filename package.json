@@ -6,8 +6,8 @@
     "mockgen": "./dist/index.js"
   },
   "scripts": {
-    "build": "tsc",
-    "clean": "rm -rf dist example/test",
+    "build": "npm run clean && tsc",
+    "clean": "rimraf dist",
     "test": "npm run build && cd example && node ../dist/index.js",
     "prepublish": "npm run build"
   },
@@ -18,7 +18,10 @@
     "@types/node": "^8.0.46",
     "@types/yargs": "^8.0.2",
     "ts-simple-ast": "^0.60.0",
-    "typescript": "^2.5.2",
+    "typescript": "2.5.2",
     "yargs": "^9.0.1"
+  },
+  "devDependencies": {
+    "rimraf": "^2.6.2"
   }
 }

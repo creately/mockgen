@@ -32,7 +32,7 @@ const inputs = argv._;
 if ( inputs && inputs.length > 0 ) {
     providedSourcePaths = inputs.map( args => rootPath + args.replace( /^(\.)/g, '' ));
 } else {
-    providedSourcePaths = [ ( srcDir.lastIndexOf( '/**/*.ts' ) == -1 ) ? srcDir + '/**/*.ts' : ''];
+    providedSourcePaths = [ ( srcDir + '/**/*.ts' ) ];
 }
 
 ast.addSourceFiles( ...providedSourcePaths );
@@ -44,7 +44,7 @@ ast.getSourceFiles().forEach(sourceFile => {
     }
 
     const sourcePath = sourceFile.getFilePath();
-    const outputPath = sourcePath.replace( srcDir, outDir );
+    const outputPath = sourcePath.replace( srcDir, outDir ).replace(/\.ts$/, mockClassFilenameSuffix);
     const outputDirname = path.dirname(outputPath);
     const relativePath = path.relative(outputDirname, sourcePath).replace( /\\/g, '/' );
 
@@ -62,7 +62,7 @@ ast.getSourceFiles().forEach(sourceFile => {
                 ...createClassFooter(sourceClass),
             ];
         })
-        .reduce((acc: string[], next: string[]) => {
+        .reduce(( acc: string[], next: string[] ) => {
             return acc.concat(next);
         }, []);
 
@@ -76,15 +76,15 @@ ast.getSourceFiles().forEach(sourceFile => {
     ].join('\n');
 
     try {
-        statSync(outputDirname);
-    } catch (err) {
-        mkdirSync(outputDirname);
+        statSync( outputDirname );
+    } catch ( err ) {
+        mkdirSync( outputDirname );
     }
 
-    writeFileSync(outputPath.replace(/\.ts$/, mockClassFilenameSuffix), mockedSource);
+    writeFileSync( outputPath, mockedSource );
+    console.info( 'Generated', outputPath );
 });
 
-console.info( 'Generated', ast.getSourceFiles().length, 'files' )
 
 function prefix(str: string, lines: string[]): string[] {
     return lines.map(line => line !== '' ? str + line : '');
