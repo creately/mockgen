@@ -7,7 +7,7 @@
   },
   "scripts": {
     "build": "npm run clean && tsc",
-    "clean": "rimraf dist",
+    "clean": "rimraf dist example/test",
     "test": "npm run build && cd example && node ../dist/index.js",
     "prepublish": "npm run build"
   },
