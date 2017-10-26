@@ -15,21 +15,27 @@ import {
     ParameterDeclaration,
 } from 'ts-simple-ast';
 
+import { argv } from 'yargs';
+
 const ast = new AST();
 const tab = '    ';
 const mockClassFilenameSuffix = '.mock.ts';
 
-const passedArguments: string[] = process.argv.slice(2);
-const defaultSourcePath = './src/**/*.ts';
 const rootPath = process.cwd().replace( /\\/g, '/' );
-const providedSourcePaths = passedArguments.map( args => rootPath + args.replace( /^(\.)/g, '' ));
 
-if (providedSourcePaths.length > 0) {
-    ast.addSourceFiles( ...providedSourcePaths );
+let providedSourcePaths;
+
+const srcDir = rootPath + ( argv.src ? argv.src.replace( /^(\.)/g, '' ) : '/src');
+const outDir = rootPath + ( argv.out ? argv.out.replace( /^(\.)/g, '' ) : '/test');
+const inputs = argv._;
+
+if ( inputs && inputs.length > 0 ) {
+    providedSourcePaths = inputs.map( args => rootPath + args.replace( /^(\.)/g, '' ));
 } else {
-    ast.addSourceFiles( defaultSourcePath );
+    providedSourcePaths = [ ( srcDir + '/**/*.ts' ) ];
 }
 
+ast.addSourceFiles( ...providedSourcePaths );
 ast.getSourceFiles().forEach(sourceFile => {
     const sourceClasses = sourceFile.getClasses();
 
@@ -38,7 +44,7 @@ ast.getSourceFiles().forEach(sourceFile => {
     }
 
     const sourcePath = sourceFile.getFilePath();
-    const outputPath = sourcePath.replace(rootPath + '/src', rootPath + '/test');
+    const outputPath = sourcePath.replace( srcDir, outDir ).replace(/\.ts$/, mockClassFilenameSuffix);
     const outputDirname = path.dirname(outputPath);
     const relativePath = path.relative(outputDirname, sourcePath).replace( /\\/g, '/' );
 
@@ -56,7 +62,7 @@ ast.getSourceFiles().forEach(sourceFile => {
                 ...createClassFooter(sourceClass),
             ];
         })
-        .reduce((acc: string[], next: string[]) => {
+        .reduce(( acc: string[], next: string[] ) => {
             return acc.concat(next);
         }, []);
 
@@ -70,14 +76,15 @@ ast.getSourceFiles().forEach(sourceFile => {
     ].join('\n');
 
     try {
-        statSync(outputDirname);
-    } catch (err) {
-        mkdirSync(outputDirname);
+        statSync( outputDirname );
+    } catch ( err ) {
+        mkdirSync( outputDirname );
     }
 
-    writeFileSync(outputPath.replace(/\.ts$/, mockClassFilenameSuffix), mockedSource);
-
+    writeFileSync( outputPath, mockedSource );
+    console.info( outputPath );
 });
+
 
 function prefix(str: string, lines: string[]): string[] {
     return lines.map(line => line !== '' ? str + line : '');
