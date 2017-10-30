@@ -60,6 +60,7 @@ ast.getSourceFiles().forEach(sourceFile => {
                 ...createClassHeader(sourceClass),
                 ...prefix(tab, createHelpers(sourceClass)),
                 ...prefix(tab, createMembers(sourceClass)),
+                ...getCustomCode( sourceClass ),
                 ...createClassFooter(sourceClass),
             ];
         })
@@ -444,6 +445,41 @@ function getInheritedMembers(sourceClass: ClassDeclaration) {
     return parent.getAllMembers();
 }
 
+function getRespectiveMockClass(sourceClass: ClassDeclaration): ClassDeclaration | null {
+    const sourceFilePath = sourceClass.getSourceFile().getFilePath();
+    const mockFilePath = sourceFilePath.replace( srcDir, outDir ).replace(/\.ts$/, mockClassFilenameSuffix);
+    const ast = new AST();
+    ast.addSourceFiles(mockFilePath);
+    const mockFile = ast.getSourceFile(mockFilePath);
+    if (!mockFile) {
+        return null;
+    }
+    const mockClass = mockFile.getClasses().filter(c => c.getName() ===  'Mock'+sourceClass.getName())[0];
+    return mockClass;
+}
+
+function getCustomCode(sourceClass: ClassDeclaration) {
+    const mockClass = getRespectiveMockClass( sourceClass );
+    if (!mockClass) {
+        return [];
+    }
+    let mockClassContent = mockClass.getText().split('\n');
+    mockClassContent.splice(0, 1);
+    mockClassContent.pop();
+    let markerIndex;
+    for (var index = mockClassContent.length; index > -1; index--) {
+        const line = mockClassContent[index];
+        if (line && line.search( /(\/\/ mockgen:custom)/g ) > -1) {
+            markerIndex = index;
+            break;
+        }
+    }
+    if (markerIndex) {
+        return mockClassContent.slice(markerIndex, mockClassContent.length);
+    }
+    return [];
+}
+
 function createMembers(sourceClass: ClassDeclaration): string[] {
     const addedMembers: any = {};
     return sourceClass.getAllMembers()
@@ -474,3 +510,5 @@ function createMembers(sourceClass: ClassDeclaration): string[] {
             return acc.concat(next);
         }, []);
 }
+
+
