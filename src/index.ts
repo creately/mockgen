@@ -127,6 +127,9 @@ function createHelpers(sourceClass: ClassDeclaration): string[] {
         `public static \$get( field: string ): any {`,
         `${tab}return this.\$class[field];`,
         `}`,
+        `public static \$set( field: string, value: any ): any {`,
+        `${tab}this.\$class[field] = value;`,
+        `}`,
         `public static \$call( field: string, ...args: any[]): any {`,
         `${tab}return this.\$class[field].call( this, ...args );`,
         `}`,
@@ -159,6 +162,9 @@ function createHelpers(sourceClass: ClassDeclaration): string[] {
         `}`,
         `public \$get( field: string ): any {`,
         `${tab}return this.\$instance[field];`,
+        `}`,
+        `public \$set( field: string, value: any ): any {`,
+        `${tab}this.\$instance[field] = value;`,
         `}`,
         `public \$call( field: string, ...args: any[]): any {`,
         `${tab}return this.\$prototype[field].call( this, ...args );`,
@@ -237,7 +243,7 @@ function createMethod(sourceProperty: MethodDeclaration): string[] {
     return lines;
 }
 
-function createGetter(sourceProperty: PropertyDeclaration | GetAccessorDeclaration): string[] {
+function createGetter(sourceProperty: GetAccessorDeclaration): string[] {
     const lines = [''];
     const propertyName = sourceProperty.getName();
     lines.push(
@@ -263,16 +269,11 @@ function createGetter(sourceProperty: PropertyDeclaration | GetAccessorDeclarati
         );
     } else {
         if (sourceProperty.getAbstractKeyword()) {
-            if (sourceProperty instanceof PropertyDeclaration) {
-                lines.push(`public ${propertyName}: any;`);
-            }
-            if (sourceProperty instanceof GetAccessorDeclaration) {
-                lines.push(
-                    `public get ${propertyName}(): any {`,
-                    `${tab}return undefined as any;`,
-                    `}`,
-                );
-            }
+            lines.push(
+                `public get ${propertyName}(): any {`,
+                `${tab}return undefined as any;`,
+                `}`,
+            );
         } else if (sourceProperty.getScope() === Scope.Private || sourceProperty.getScope() === Scope.Protected) {
             lines.push(
                 `public \$get${upperCamelCase(propertyName)}() {`,
@@ -315,6 +316,12 @@ function createSetter(sourceProperty: SetAccessorDeclaration): string[] {
                 `public set ${propertyName}( val: any ) {`,
                 `}`,
             );
+        } else if (sourceProperty.getScope() === Scope.Private || sourceProperty.getScope() === Scope.Protected) {
+            lines.push(
+                `public \$set${upperCamelCase(propertyName)}( val: any ) {`,
+                `${tab}this.$set( '${propertyName}', val );`,
+                `}`,
+            );
         }
         lines.push(
             `public \$createSetterFor${upperCamelCase(propertyName)}() {`,
@@ -328,28 +335,69 @@ function createSetter(sourceProperty: SetAccessorDeclaration): string[] {
     return lines;
 }
 
-function createParameter(sourceProperty: ParameterDeclaration): string[] {
+function createProperty(sourceProperty: PropertyDeclaration): string[] {
     const lines = [''];
-    const parameterName = sourceProperty.getName();
+    const propertyName = sourceProperty.getName();
+    if (!propertyName) {
+        return [];
+    }
     lines.push(
         `/**`,
-        ` * ${parameterName}`,
+        ` * ${propertyName}`,
         ` */`,
     );
-    if (parameterName) {
-        if (sourceProperty.getScope() === Scope.Private || sourceProperty.getScope() === Scope.Protected) {
+    if (sourceProperty.getStaticKeyword()) {
+        if (sourceProperty.getScope() === Scope.Protected) {
+            lines.push(`public static ${propertyName}: any;`);
+        } else if (sourceProperty.getScope() === Scope.Private) {
             lines.push(
-                `public \$get${upperCamelCase(parameterName)}() {`,
-                `${tab}return this.$get( '${parameterName}' );`,
+                `public static \$get${upperCamelCase(propertyName)}() {`,
+                `${tab}return this.$get( '${propertyName}' );`,
+                `}`,
+                `public static \$set${upperCamelCase(propertyName)}( val: any ) {`,
+                `${tab}this.$set( '${propertyName}', val );`,
                 `}`,
             );
         }
+    } else {
+        if (sourceProperty.getAbstractKeyword()) {
+            lines.push(`public ${propertyName}: any;`);
+        } else if (sourceProperty.getScope() === Scope.Protected) {
+            lines.push(`public ${propertyName}: any;`);
+        } else if (sourceProperty.getScope() === Scope.Private) {
+            lines.push(
+                `public \$get${upperCamelCase(propertyName)}() {`,
+                `${tab}return this.$get( '${propertyName}' );`,
+                `}`,
+                `public \$set${upperCamelCase(propertyName)}( val: any ) {`,
+                `${tab}this.$set( '${propertyName}', val );`,
+                `}`,
+            );
+        }
+    }
+    return lines;
+}
+
+function createParameter(sourceProperty: ParameterDeclaration): string[] {
+    const lines = [''];
+    const propertyName = sourceProperty.getName();
+    if (!propertyName) {
+        return [];
+    }
+    lines.push(
+        `/**`,
+        ` * ${propertyName}`,
+        ` */`,
+    );
+    if (sourceProperty.getScope() === Scope.Protected) {
+        lines.push(`public ${propertyName}: any;`);
+    } else if (sourceProperty.getScope() === Scope.Private) {
         lines.push(
-            `public \$createGetterFor${upperCamelCase(parameterName)}() {`,
-            `${tab}return this.\$createGetterFor( '${parameterName}' );`,
+            `public \$get${upperCamelCase(propertyName)}() {`,
+            `${tab}return this.$get( '${propertyName}' );`,
             `}`,
-            `public \$getSpyFor${upperCamelCase(parameterName)}() {`,
-            `${tab}return this.\$getSpyFor( '${parameterName}' );`,
+            `public \$set${upperCamelCase(propertyName)}( val: any ) {`,
+            `${tab}return this.$set( '${propertyName}', val );`,
             `}`,
         );
     }
@@ -410,7 +458,9 @@ function createMembers(sourceClass: ClassDeclaration): string[] {
             }
             if (sourceProperty instanceof MethodDeclaration) {
                 return createMethod(sourceProperty);
-            } else if (sourceProperty instanceof PropertyDeclaration || sourceProperty instanceof GetAccessorDeclaration) {
+            } else if (sourceProperty instanceof PropertyDeclaration) {
+                return createProperty(sourceProperty);
+            } else if (sourceProperty instanceof GetAccessorDeclaration) {
                 return createGetter(sourceProperty);
             } else if (sourceProperty instanceof SetAccessorDeclaration) {
                 return createSetter(sourceProperty);
