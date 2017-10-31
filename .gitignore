@@ -1,3 +1,2 @@
 node_modules
-example/test
-*.js
+dist
