@@ -425,7 +425,7 @@ function getParentClass(sourceClass: ClassDeclaration): ClassDeclaration | null 
     const parentPath = ext
         .getSourceFile()
         .getImports()
-        .filter(imp => imp.getNamedImports().filter(named => named.getText() === parentName))[0]
+        .filter(imp => imp.getNamedImports().filter(named => named.getText() === parentName).length)[0]
         .getModuleSpecifier();
     const sourceFileDir = path.dirname(sourceClass.getSourceFile().getFilePath());
     const resolvedPath = path.resolve(sourceFileDir, parentPath + '.ts');
@@ -510,5 +510,3 @@ function createMembers(sourceClass: ClassDeclaration): string[] {
             return acc.concat(next);
         }, []);
 }
-
-
