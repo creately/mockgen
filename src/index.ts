@@ -427,6 +427,8 @@ function getParentClass(sourceClass: ClassDeclaration): ClassDeclaration | null 
         .getImports()
         .filter(imp => imp.getNamedImports().filter(named => named.getText() === parentName).length);
     if (!importSpecifiers || importSpecifiers.length == 0) {
+        // TODO: the result can be empty if the parent class is in the same file.
+        // This requires implementation to go through classes on current file when this happens
         return null;
     }
     const parentPath = importSpecifiers[0].getModuleSpecifier();
