@@ -3,6 +3,10 @@ export class TestConcreteClass {
     private static sa2: number;
     protected static sa3: number;
 
+    public static a1: number;
+    private static a2: number;
+    protected static a3: number;
+
     public static get sc1(): number { return 1 }
     private static get sc2(): number { return 1 }
     protected static get sc3(): number { return 1 }

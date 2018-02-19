@@ -481,16 +481,18 @@ function getCustomCode(sourceClass: ClassDeclaration) {
 }
 
 function createMembers(sourceClass: ClassDeclaration): string[] {
-    const addedMembers: any = {};
+    const addedMembers: any = { instance: {}, static: {} };
     return sourceClass.getAllMembers()
         .concat(getAbstractMethods( sourceClass ))
         .concat(getInheritedMembers( sourceClass ))
         .map(sourceProperty => {
             const name = (sourceProperty as any).getName && (sourceProperty as any).getName();
-            if (addedMembers[name]) {
+            const isStatic = (sourceProperty as any).getStaticKeyword && (sourceProperty as any).getStaticKeyword();
+            const added = isStatic ? addedMembers.static : addedMembers.instance;
+            if (added[name]) {
                 return [];
             } else {
-                addedMembers[name] = true;
+                added[name] = true;
             }
             if (sourceProperty instanceof MethodDeclaration) {
                 return createMethod(sourceProperty);

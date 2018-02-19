@@ -92,6 +92,25 @@ export class MockTestConcreteClass extends TestConcreteClass {
     public static sa3: any;
 
     /**
+     * a1
+     */
+
+    /**
+     * a2
+     */
+    public static $getA2() {
+        return this.$get( 'a2' );
+    }
+    public static $setA2( val: any ) {
+        this.$set( 'a2', val );
+    }
+
+    /**
+     * a3
+     */
+    public static a3: any;
+
+    /**
      * sc1
      */
     public static $createGetterForSc1() {
