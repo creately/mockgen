@@ -102,25 +102,6 @@ export class MockTestAbstractClass extends TestAbstractClass {
     public aa3: any;
 
     /**
-     * b1
-     */
-
-    /**
-     * b2
-     */
-    public $getB2() {
-        return this.$get( 'b2' );
-    }
-    public $setB2( val: any ) {
-        return this.$set( 'b2', val );
-    }
-
-    /**
-     * b3
-     */
-    public b3: any;
-
-    /**
      * ac1
      */
     public get ac1(): any {
@@ -168,6 +149,32 @@ export class MockTestAbstractClass extends TestAbstractClass {
     }
     public $getSpyForAd3() {
         return this.$getSpyFor( 'ad3' );
+    }
+
+    /**
+     * ae1
+     */
+    public ae1( ...args: any[]) {
+        return undefined as any;
+    }
+    public $createSpyForAe1() {
+        return this.$createSpyFor( 'ae1' );
+    }
+    public $getSpyForAe1() {
+        return this.$getSpyFor( 'ae1' );
+    }
+
+    /**
+     * ae3
+     */
+    public ae3( ...args: any[]) {
+        return undefined as any;
+    }
+    public $createSpyForAe3() {
+        return this.$createSpyFor( 'ae3' );
+    }
+    public $getSpyForAe3() {
+        return this.$getSpyFor( 'ae3' );
     }
 
     /**
@@ -279,28 +286,21 @@ export class MockTestAbstractClass extends TestAbstractClass {
     }
 
     /**
-     * ae1
+     * b1
      */
-    public ae1( ...args: any[]) {
-        return undefined as any;
+
+    /**
+     * b2
+     */
+    public $getB2() {
+        return this.$get( 'b2' );
     }
-    public $createSpyForAe1() {
-        return this.$createSpyFor( 'ae1' );
-    }
-    public $getSpyForAe1() {
-        return this.$getSpyFor( 'ae1' );
+    public $setB2( val: any ) {
+        return this.$set( 'b2', val );
     }
 
     /**
-     * ae3
+     * b3
      */
-    public ae3( ...args: any[]) {
-        return undefined as any;
-    }
-    public $createSpyForAe3() {
-        return this.$createSpyFor( 'ae3' );
-    }
-    public $getSpyForAe3() {
-        return this.$getSpyFor( 'ae3' );
-    }
+    public b3: any;
 }

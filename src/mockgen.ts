@@ -2,7 +2,7 @@
 
 import * as path from 'path';
 import { statSync, mkdirSync, writeFileSync } from 'fs';
-import AST from 'ts-simple-ast';
+import Project, { ClassMemberTypes, ClassInstancePropertyTypes } from 'ts-simple-ast';
 import {
     SourceFile,
     ClassDeclaration,
@@ -18,7 +18,7 @@ import {
 import * as mkdirp from 'mkdirp';
 import { argv } from 'yargs';
 
-const ast = new AST();
+const ast = new Project();
 const tab = '    ';
 const mockClassFilenameSuffix = '.mock.ts';
 
@@ -36,7 +36,7 @@ if ( inputs && inputs.length > 0 ) {
     providedSourcePaths = [ ( srcDir + '/**/*.ts' ) ];
 }
 
-ast.addSourceFiles( ...providedSourcePaths );
+ast.addExistingSourceFiles( providedSourcePaths );
 ast.getSourceFiles().forEach(sourceFile => {
     const sourceClasses = sourceFile.getClasses();
 
@@ -424,7 +424,7 @@ function getParentClass(sourceClass: ClassDeclaration): ClassDeclaration | null 
     const parentName = ext.getText().split('<')[0];
     const importSpecifiers = ext
         .getSourceFile()
-        .getImports()
+        .getImportDeclarations()
         .filter(imp => imp.getNamedImports().filter(named => named.getText() === parentName).length);
     if (!importSpecifiers || importSpecifiers.length == 0) {
         // TODO: the result can be empty if the parent class is in the same file.
@@ -447,14 +447,14 @@ function getInheritedMembers(sourceClass: ClassDeclaration) {
     if (!parent) {
         return [];
     }
-    return parent.getAllMembers();
+    return getAllMembers( parent );
 }
 
 function getRespectiveMockClass(sourceClass: ClassDeclaration): ClassDeclaration | null {
     const sourceFilePath = sourceClass.getSourceFile().getFilePath();
     const mockFilePath = sourceFilePath.replace( srcDir, outDir ).replace(/\.ts$/, mockClassFilenameSuffix);
-    const ast = new AST();
-    ast.addSourceFiles(mockFilePath);
+    const ast = new Project();
+    ast.addExistingSourceFiles(mockFilePath);
     const mockFile = ast.getSourceFile(mockFilePath);
     if (!mockFile) {
         return null;
@@ -487,7 +487,7 @@ function getCustomCode(sourceClass: ClassDeclaration) {
 
 function createMembers(sourceClass: ClassDeclaration): string[] {
     const addedMembers: any = { instance: {}, static: {} };
-    return sourceClass.getAllMembers()
+    return getAllMembers( sourceClass )
         .concat(getAbstractMethods( sourceClass ))
         .concat(getInheritedMembers( sourceClass ))
         .map(sourceProperty => {
@@ -516,4 +516,25 @@ function createMembers(sourceClass: ClassDeclaration): string[] {
         .reduce((acc: string[], next: string[]) => {
             return acc.concat(next);
         }, []);
+}
+
+function getParameterProperties( sourceClass: ClassDeclaration ) {
+    if (sourceClass) {
+        const properties = sourceClass.getInstanceProperties();
+        return properties.filter( property => {
+            if (property instanceof ParameterDeclaration) {
+                return true;
+            }
+        })
+    }
+    return [];
+}
+
+function getAllMembers( sourceClass: ClassDeclaration ) {
+    const members: ( ClassMemberTypes | ClassInstancePropertyTypes )[] = []
+    if (sourceClass) {
+        members.push( ...sourceClass.getMembers());
+        members.push( ...getParameterProperties( sourceClass ))
+    }
+    return members;
 }
