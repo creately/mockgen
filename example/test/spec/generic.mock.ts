@@ -92,25 +92,6 @@ export class MockTestGenericClass extends TestGenericClass<any> {
     public a3: any;
 
     /**
-     * b1
-     */
-
-    /**
-     * b2
-     */
-    public $getB2() {
-        return this.$get( 'b2' );
-    }
-    public $setB2( val: any ) {
-        return this.$set( 'b2', val );
-    }
-
-    /**
-     * b3
-     */
-    public b3: any;
-
-    /**
      * c1
      */
     public $createGetterForC1() {
@@ -217,4 +198,23 @@ export class MockTestGenericClass extends TestGenericClass<any> {
     public $getSpyForE3() {
         return this.$getSpyFor( 'e3' );
     }
+
+    /**
+     * b1
+     */
+
+    /**
+     * b2
+     */
+    public $getB2() {
+        return this.$get( 'b2' );
+    }
+    public $setB2( val: any ) {
+        return this.$set( 'b2', val );
+    }
+
+    /**
+     * b3
+     */
+    public b3: any;
 }

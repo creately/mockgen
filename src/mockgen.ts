@@ -2,7 +2,7 @@
 
 import * as path from 'path';
 import { statSync, mkdirSync, writeFileSync } from 'fs';
-import Project from 'ts-simple-ast';
+import Project, { ClassMemberTypes, ClassInstancePropertyTypes } from 'ts-simple-ast';
 import {
     SourceFile,
     ClassDeclaration,
@@ -447,7 +447,7 @@ function getInheritedMembers(sourceClass: ClassDeclaration) {
     if (!parent) {
         return [];
     }
-    return parent.getMembers();
+    return getAllMembers( parent );
 }
 
 function getRespectiveMockClass(sourceClass: ClassDeclaration): ClassDeclaration | null {
@@ -487,7 +487,7 @@ function getCustomCode(sourceClass: ClassDeclaration) {
 
 function createMembers(sourceClass: ClassDeclaration): string[] {
     const addedMembers: any = { instance: {}, static: {} };
-    return sourceClass.getMembers()
+    return getAllMembers( sourceClass )
         .concat(getAbstractMethods( sourceClass ))
         .concat(getInheritedMembers( sourceClass ))
         .map(sourceProperty => {
@@ -516,4 +516,25 @@ function createMembers(sourceClass: ClassDeclaration): string[] {
         .reduce((acc: string[], next: string[]) => {
             return acc.concat(next);
         }, []);
+}
+
+function getParameterProperties( sourceClass: ClassDeclaration ) {
+    if (sourceClass) {
+        const properties = sourceClass.getInstanceProperties();
+        return properties.filter( property => {
+            if (property instanceof ParameterDeclaration) {
+                return true;
+            }
+        })
+    }
+    return [];
+}
+
+function getAllMembers( sourceClass: ClassDeclaration ) {
+    const members: ( ClassMemberTypes | ClassInstancePropertyTypes )[] = []
+    if (sourceClass) {
+        members.push( ...sourceClass.getMembers());
+        members.push( ...getParameterProperties( sourceClass ))
+    }
+    return members;
 }
