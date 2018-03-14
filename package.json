@@ -13,7 +13,12 @@
     "test-specgen": "cd example && node ../dist/specgen.js",
     "prepublish": "npm run build"
   },
-  "keywords": ["mockgen", "specgen", "spec generator", "mock generator"],
+  "keywords": [
+    "mockgen",
+    "specgen",
+    "spec generator",
+    "mock generator"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -25,7 +30,7 @@
   "homepage": "https://github.com/creately/mockgen#readme",
   "dependencies": {
     "mkdirp": "^0.5.1",
-    "ts-simple-ast": "^0.60.0",
+    "ts-simple-ast": "^9.0.0",
     "yargs": "^9.0.1"
   },
   "devDependencies": {
