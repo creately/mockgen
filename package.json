@@ -9,8 +9,8 @@
   "scripts": {
     "build": "npm run clean && tsc",
     "clean": "rimraf dist example/test",
-    "test-mockgen": "cd example && node ../dist/mockgen.js",
-    "test-specgen": "cd example && node ../dist/specgen.js",
+    "test-mockgen": "tsc && cd example && node ../dist/mockgen.js",
+    "test-specgen": "tsc && cd example && node ../dist/specgen.js",
     "prepublish": "npm run build"
   },
   "keywords": [
@@ -30,7 +30,7 @@
   "homepage": "https://github.com/creately/mockgen#readme",
   "dependencies": {
     "mkdirp": "^0.5.1",
-    "ts-simple-ast": "^9.0.0",
+    "ts-simple-ast": "9.0.1",
     "yargs": "^9.0.1"
   },
   "devDependencies": {
