@@ -12,6 +12,10 @@ import Project, {
     GetAccessorDeclaration,
     SetAccessorDeclaration,
     ParameterDeclaration,
+    Node,
+    ts,
+    Expression,
+    ExpressionStatement,
 } from 'ts-simple-ast';
 
 import * as mkdirp from 'mkdirp';
@@ -46,13 +50,18 @@ ast.getSourceFiles().forEach(sourceFile => {
     
     const sourcePath = sourceFile.getFilePath();
     const outputPath = getRespectiveSpecFilePath( sourceFile );
-    if( existsSync( outputPath )){
-        console.info( outputPath, 'already exist. Skipping.' );
-        return;
-    }
+    // if( existsSync( outputPath )){
+    //     console.info( outputPath, 'already exist. Skipping.' );
+    //     return;
+    // }
     const outputDirname = path.dirname(outputPath);
     const relativePath = path.relative(outputDirname, sourcePath).replace( /\\/g, '/' );
+    // console.log( 'inspecting sourceFile', sourceFile.getFilePath() );
 
+    sourceClasses.forEach( sourceClass => {
+        processExistingSpecFile( sourceClass )
+    });
+/**
     const specImports = sourceClasses
         .map(sourceClass => {
             return `import { ${sourceClass.getName()} } from '${relativePath.replace(/\.ts$/, '')}';`
@@ -85,6 +94,7 @@ ast.getSourceFiles().forEach(sourceFile => {
 
     writeFileSync( outputPath, outputSpec );
     console.info( outputPath );
+/**/
 });
 
 function prefix(str: string, lines: string[]): string[] {
@@ -100,11 +110,10 @@ function createSpecFooterForClass(sourceClass: ClassDeclaration): string[] {
     return ['',`});`];
 }
 
-function createDescribeBlock(classMember: MethodDeclaration | GetAccessorDeclaration | SetAccessorDeclaration, body: string[] = ['']): string[] {
+function createDescribeBlock(classMemberName: string, body: string[] = ['']): string[] {
     const lines = [''];
-    const memberName = classMember.getName();
     lines.push(
-        `describe( '${memberName}', () => {`,
+        `describe( '${classMemberName}', () => {`,
         ...prefix( tab, body ),
         `});`
     );
@@ -123,7 +132,7 @@ function createSpecOutline(sourceClass: ClassDeclaration): string[] {
             if ( classMember.getScope() === Scope.Protected
                 || classMember.getScope() === Scope.Public 
             ) {
-                lines.push( ...createDescribeBlock( classMember ));
+                lines.push( ...createDescribeBlock( classMember.getName() ));
             }        
         } 
     });
@@ -143,5 +152,83 @@ function getRespectiveSpecFile(sourceClass: ClassDeclaration): SourceFile | unde
     return ast.getSourceFile(specFilePath);
 }
 
+function getExpressionNodes( nodes: Node<ts.Node>[]): ExpressionStatement[]  {
+    return nodes.filter( node => node instanceof ExpressionStatement ) as ExpressionStatement[];
+}
 
+function getExpressionIdentifierName( expression: Expression ): string {
+    if ( !expression ) {
+        return '';
+    }
+    const identifierNode = expression.getChildren()[0];
+    return identifierNode.compilerNode.getText();
+}
 
+function isDescribeExpression( expression: Expression ) {
+    return getExpressionIdentifierName( expression ) === 'describe';
+}
+
+function getArgumentsFromExpression( expression: Expression ) {
+    return expression.getChildCount()
+}
+
+function processExistingSpecFile( sourceClass: ClassDeclaration ) {
+    let specFile: SourceFile | undefined = getRespectiveSpecFile( sourceClass );
+    const sourceClassName: string = sourceClass.getName();
+    if (specFile) {
+        // tslint:disable-next-line:no-console
+        console.log( 'specfile', specFile.getFilePath() );
+        const specFileStructure: {[className: string]: string[]} = {};
+        const classLevelSyntaxList = specFile.getChildSyntaxList();
+        if (classLevelSyntaxList) {
+            classLevelSyntaxList.addChildText( createDescribeBlock('newtest').join('\n') )
+            const children = classLevelSyntaxList.getChildren();
+            const expressions: ExpressionStatement[] = getExpressionNodes( children );
+            expressions.forEach( expressionStatement => {
+                const expression = expressionStatement.getExpression();
+                if ( isDescribeExpression( expression ) ) {
+                    const classChildren = expression.getChildren();
+                    // tslint:disable-next-line:no-console
+                    console.log( 'classChildren', classChildren );
+                    
+                }
+            });
+            // tslint:disable-next-line:no-console
+            // console.log( expr.getChildren() );
+            
+
+        }
+        // specFile.saveSync();
+    } else {
+        // specFile = new SourceFile();
+        
+    }
+}
+
+function getSpecOutlineFromSourceClass( sourceClass: ClassDeclaration ) {
+    const classMemberNames: string[] = [];
+    const classMembers = sourceClass.getMembers();
+    classMembers.forEach( classMember => {
+
+        if ( classMember instanceof MethodDeclaration 
+            || classMember instanceof GetAccessorDeclaration
+            || classMember instanceof SetAccessorDeclaration )
+        {
+            if ( classMember.getScope() === Scope.Protected
+                || classMember.getScope() === Scope.Public 
+            ) {
+                classMemberNames.push( classMember.getName());
+            }        
+        } 
+    });
+    const classSpecOutline: ClassSpecOutline = {
+        className: sourceClass.getName(),
+        classMembers: classMemberNames
+    }
+    return classSpecOutline;
+}
+
+interface ClassSpecOutline {
+    className: string;
+    classMembers: string[];
+}
