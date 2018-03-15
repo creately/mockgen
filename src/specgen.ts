@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import * as path from 'path';
-import { statSync, mkdirSync, writeFileSync } from 'fs';
+import { statSync, mkdirSync, writeFileSync, existsSync } from 'fs';
 import Project, {
     SourceFile,
     ClassDeclaration,
@@ -37,14 +37,19 @@ if ( inputs && inputs.length > 0 ) {
 
 ast.addExistingSourceFiles( providedSourcePaths );
 ast.getSourceFiles().forEach(sourceFile => {
-    const sourceClasses = sourceFile.getClasses();
 
+    const sourceClasses = sourceFile.getClasses();
+    
     if (!sourceClasses.length) {
         return;
     }
-
+    
     const sourcePath = sourceFile.getFilePath();
-    const outputPath = sourcePath.replace( srcDir, outDir ).replace(/\.ts$/, specFilenameSuffix);
+    const outputPath = getRespectiveSpecFilePath( sourceFile );
+    if( existsSync( outputPath )){
+        console.info( outputPath, 'already exist. Skipping.' );
+        return;
+    }
     const outputDirname = path.dirname(outputPath);
     const relativePath = path.relative(outputDirname, sourcePath).replace( /\\/g, '/' );
 
@@ -125,10 +130,14 @@ function createSpecOutline(sourceClass: ClassDeclaration): string[] {
     return lines;
 }
 
+function getRespectiveSpecFilePath(sourceFile: SourceFile) {
+    const sourceFilePath = sourceFile.getFilePath();
+    const specFilePath = sourceFilePath.replace( srcDir, outDir ).replace(/\.ts$/, specFilenameSuffix);
+    return specFilePath;
+}
 
 function getRespectiveSpecFile(sourceClass: ClassDeclaration): SourceFile | undefined {
-    const sourceFilePath = sourceClass.getSourceFile().getFilePath();
-    const specFilePath = sourceFilePath.replace( srcDir, outDir ).replace(/\.ts$/, specFilenameSuffix);
+    const specFilePath = getRespectiveSpecFilePath( sourceClass.getSourceFile() );
     const ast = new Project();
     ast.addSourceFileIfExists(specFilePath);
     return ast.getSourceFile(specFilePath);
