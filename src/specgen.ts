@@ -103,6 +103,7 @@ function createSpecOutline( classSpecOutline: IClassSpecOutline ): string[] {
     classSpecOutline.members.forEach( classMemberName => {
         body.push( ...createDescribeBlock( classMemberName )); 
     });
+    body.push('');
     return createDescribeBlock( classSpecOutline.className, body );
 }
 
@@ -149,20 +150,20 @@ function filterDescribeStatements( statements: Statement[]): ExpressionStatement
 }
 
 function getSpecFileStructure( classLevelDescibeStatements: ExpressionStatement[] ){
-    const specFileStructure: {[className: string]: { members: string[], syntaxlist: SyntaxList|undefined}} = {};
+    const specFileStructure: {[className: string]: { members: string[], syntaxList: SyntaxList|undefined}} = {};
     classLevelDescibeStatements.forEach( expressionStatement => {
         const expressionArgs = getArgumentsFromExpression( expressionStatement.getExpression() );
-        const className = expressionArgs[0].getText();// First arg is the class name
+        const className = expressionArgs[0].getText().replace(/\'/g,'');// First arg is the class name
         const testFn = expressionArgs[1] as ArrowFunction;// 2nd arg is the specification fn
-        const memberStatements = filterDescribeStatements(testFn.getStatements());
+        const memberStatements = filterDescribeStatements( testFn.getStatements());
         const classMemberNames: string[] = memberStatements.map( statement => {
             const memberArguments = getArgumentsFromExpression( statement.getExpression());
-            const memberName = memberArguments[0].getText();
+            const memberName = memberArguments[0].getText().replace(/\'/g,'');
             return memberName;
         });
         specFileStructure[ className ] = {
             members: classMemberNames,
-            syntaxlist: expressionStatement.getChildSyntaxList()
+            syntaxList: testFn.getChildSyntaxList()
         }
     });
     return specFileStructure;
@@ -179,13 +180,13 @@ function processExistingSpecFile( sourceFile: SourceFile ) {
 
         const classLevelDescibeStatements: ExpressionStatement[] = filterDescribeStatements( specFile.getStatements());
         const specFileStructure = getSpecFileStructure( classLevelDescibeStatements );
-
         expectedSpecFileStructure.forEach( classSpecOutline => {
             const specClassBlock = specFileStructure[ classSpecOutline.className ];
-            if ( specClassBlock ) {
+            if ( specClassBlock && specClassBlock.syntaxList ) {
+                const syntaxList = specClassBlock.syntaxList;
                 classSpecOutline.members.forEach( member => {
                     if( specClassBlock.members.indexOf( member ) == -1 ){
-                        specClassBlock.syntaxlist && specClassBlock.syntaxlist.addChildText( 
+                        syntaxList.addChildText( 
                             createDescribeBlock( member ).join('\n')
                         );
                     }
