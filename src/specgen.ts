@@ -56,7 +56,6 @@ ast.getSourceFiles().forEach( sourceFile => {
     const outputDirname = path.dirname(outputPath);
     const relativePath = path.relative(outputDirname, sourcePath).replace( /\\/g, '/' );
     const mockClassFileName = relativePath.substr( relativePath.lastIndexOf('/') + 1).replace(/\.ts$/, '.mock');
-    console.log( relativePath );
     const specImports = sourceClasses
         .map(sourceClass => {
             return `import { ${sourceClass.getName()} } from '${relativePath.replace(/\.ts$/, '')}';`
@@ -235,7 +234,6 @@ function getSpecOutlineFromSourceClass( sourceClass: ClassDeclaration ): IClassS
 
 function createConstructorSpecOutline ( className: string ): string {
     const classNameInCamelCase = className.charAt(0).toLowerCase() + className.substr( 1 );
-    console.log( 'createConstructorSpecOutline called for', classNameInCamelCase );
     const str = `
     let ${classNameInCamelCase}: Mock${className};
 

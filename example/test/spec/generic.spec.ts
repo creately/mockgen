@@ -1,6 +1,17 @@
 import { TestGenericClass } from '../../src/generic';
+import { MockTestGenericClass } from './generic.mock';
 
 describe( 'TestGenericClass', () => {
+    
+    let testGenericClass: MockTestGenericClass;
+
+    beforeEach(() => {
+        // testGenericClass = new MockTestGenericClass();
+    });
+ 
+    describe( 'constructor', () => {
+
+    });
 
     describe( 'c1', () => {
 

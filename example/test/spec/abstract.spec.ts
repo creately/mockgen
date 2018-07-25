@@ -1,6 +1,17 @@
 import { TestAbstractClass } from '../../src/abstract';
+import { MockTestAbstractClass } from './abstract.mock';
 
 describe( 'TestAbstractClass', () => {
+    
+    let testAbstractClass: MockTestAbstractClass;
+
+    beforeEach(() => {
+        // testAbstractClass = new MockTestAbstractClass();
+    });
+ 
+    describe( 'constructor', () => {
+
+    });
 
     describe( 'ac1', () => {
 
