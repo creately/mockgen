@@ -1,13 +1,11 @@
 #!/usr/bin/env node
 
 import * as path from 'path';
-import { statSync, mkdirSync, writeFileSync } from 'fs';
+import { statSync, writeFileSync } from 'fs';
 import Project, { ClassMemberTypes, ClassInstancePropertyTypes } from 'ts-simple-ast';
 import {
-    SourceFile,
     ClassDeclaration,
     MethodDeclaration,
-    ConstructorDeclaration,
     Scope,
     PropertyDeclaration,
     GetAccessorDeclaration,
@@ -61,7 +59,7 @@ ast.getSourceFiles().forEach(sourceFile => {
                 ...prefix(tab, createHelpers(sourceClass)),
                 ...prefix(tab, createMembers(sourceClass)),
                 ...getCustomCode( sourceClass ),
-                ...createClassFooter(sourceClass),
+                ...createClassFooter(),
             ];
         })
         .reduce(( acc: string[], next: string[] ) => {
@@ -110,7 +108,7 @@ function createClassHeader(sourceClass: ClassDeclaration): string[] {
     return [`export class Mock${className} extends ${className}${typeParams} {`];
 }
 
-function createClassFooter(sourceClass: ClassDeclaration): string[] {
+function createClassFooter(): string[] {
     return [`}`];
 }
 

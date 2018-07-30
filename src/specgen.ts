@@ -55,9 +55,11 @@ ast.getSourceFiles().forEach( sourceFile => {
     }
     const outputDirname = path.dirname(outputPath);
     const relativePath = path.relative(outputDirname, sourcePath).replace( /\\/g, '/' );
+    const mockClassFileName = relativePath.substr( relativePath.lastIndexOf('/') + 1).replace(/\.ts$/, '.mock');
     const specImports = sourceClasses
         .map(sourceClass => {
             return `import { ${sourceClass.getName()} } from '${relativePath.replace(/\.ts$/, '')}';`
+            + `\nimport { Mock${sourceClass.getName()} } from './${mockClassFileName}';`
         });
 
     const generatedSpec = sourceClasses
@@ -100,6 +102,7 @@ function createDescribeBlock(classMemberName: string, body: string[] = ['']): st
 
 function createSpecOutline( classSpecOutline: IClassSpecOutline ): string[] {
     const body: string[] = [];
+    body.push( createConstructorSpecOutline( classSpecOutline.className ));
     classSpecOutline.members.forEach( classMemberName => {
         body.push( ...createDescribeBlock( classMemberName )); 
     });
@@ -113,7 +116,7 @@ function getRespectiveSpecFilePath(sourceFile: SourceFile) {
     return specFilePath;
 }
 
-function    getRespectiveSpecFile(sourceFile: SourceFile): SourceFile | undefined {
+function getRespectiveSpecFile(sourceFile: SourceFile): SourceFile | undefined {
     const specFilePath = getRespectiveSpecFilePath( sourceFile );
     const ast = new Project();
     ast.addSourceFileIfExists(specFilePath);
@@ -227,6 +230,21 @@ function getSpecOutlineFromSourceClass( sourceClass: ClassDeclaration ): IClassS
         members: classMemberNames
     }
     return classSpecOutline;
+}
+
+function createConstructorSpecOutline ( className: string ): string {
+    const classNameInCamelCase = className.charAt(0).toLowerCase() + className.substr( 1 );
+    const str = `
+    let ${classNameInCamelCase}: Mock${className};
+
+    beforeEach(() => {
+        // ${classNameInCamelCase} = new Mock${className}();
+    });
+ 
+    describe( 'constructor', () => {
+
+    });`;
+    return str;
 }
 
 interface IClassSpecOutline {

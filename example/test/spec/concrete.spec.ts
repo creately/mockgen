@@ -1,6 +1,17 @@
 import { TestConcreteClass } from '../../src/concrete';
+import { MockTestConcreteClass } from './concrete.mock';
 
 describe( 'TestConcreteClass', () => {
+    
+    let testConcreteClass: MockTestConcreteClass;
+
+    beforeEach(() => {
+        // testConcreteClass = new MockTestConcreteClass();
+    });
+ 
+    describe( 'constructor', () => {
+
+    });
 
     describe( 'sc1', () => {
 
