@@ -31,7 +31,7 @@
   "dependencies": {
     "mkdirp": "^0.5.1",
     "ts-simple-ast": "9.0.1",
-    "yargs": "^9.0.1"
+    "yargs": "^17.7.1"
   },
   "devDependencies": {
     "@types/jasmine": "^2.6.0",
